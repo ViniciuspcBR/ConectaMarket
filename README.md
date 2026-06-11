@@ -139,7 +139,7 @@ https://www.docker.com/products/docker-desktop/
 ### 1. Clonar o repositório
 
 ```bash
-git clone https://github.com/SEU-USUARIO/conectmarket.git
+git clone https://github.com/ViniciuspcBR/ConectaMarket.git
 cd conectmarket
 ```
 
@@ -201,7 +201,7 @@ docker-compose down
 
 # Reiniciar completamente o ambiente
 
-⚠️ Atenção: este procedimento remove todos os dados do banco.
+Atenção: este procedimento remove todos os dados do banco.
 
 ```bash
 docker-compose down -v
