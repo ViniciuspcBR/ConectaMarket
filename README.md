@@ -39,6 +39,12 @@ O ConectMarket tem como objetivo fornecer uma plataforma acessível para divulga
 * Docker Compose
 * Nginx
 
+#### Protótipo das Interfaces
+
+As telas do sistema foram prototipadas utilizando Figma:
+
+https://www.figma.com/proto/Pfo7ekOG6CAXZX4vrO0G1M/Sem-t%C3%ADtulo?node-id=1-9&p=f&t=1cfsJnvAwSeFt11H-1&scaling=min-zoom&content-scaling=fixed&page-id=0%3A1
+
 ---
 
 ## Funcionalidades
