@@ -1,0 +1,31 @@
+/* src/pages/ProdutoDetalhe.css */
+.detalhe-layout { display: grid; grid-template-columns: 1fr 1.5fr; gap: 24px; }
+
+.detalhe-imagem {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 280px; background: #f1f5f9;
+}
+.detalhe-imagem img { width: 100%; border-radius: 12px; object-fit: cover; max-height: 340px; }
+
+.detalhe-info h1       { font-size: 1.5rem; color: #1e293b; }
+.detalhe-categoria     { color: #94a3b8; font-size: 0.88rem; margin-top: 6px; }
+.detalhe-preco         { font-size: 2rem; font-weight: 800; color: #2563eb; margin: 12px 0; }
+.detalhe-desc          { color: #475569; font-size: 0.95rem; line-height: 1.6; }
+.detalhe-estoque       { margin-top: 12px; font-size: 0.9rem; color: #64748b; }
+.detalhe-compra        { display: flex; gap: 12px; align-items: center; margin-top: 20px; }
+.detalhe-msg           { margin-top: 14px; font-size: 0.9rem; font-weight: 600; }
+
+.avaliacao-item { padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
+.avaliacao-item p { color: #475569; margin-top: 4px; font-size: 0.9rem; }
+
+.avaliacao-form { margin-top: 24px; display: flex; flex-direction: column; gap: 12px; }
+.avaliacao-form h3 { font-size: 1rem; }
+
+@media (max-width: 700px) {
+  .detalhe-layout { grid-template-columns: 1fr; }
+}
+
+.qtd-control { display:flex; align-items:center; gap:10px; }
+.qtd-control button { width:32px; height:32px; border-radius:6px; background:#f1f5f9; color:#1e293b; font-size:1.1rem; font-weight:700; padding:0; display:flex; align-items:center; justify-content:center; }
+.qtd-control span { font-weight:700; min-width:28px; text-align:center; font-size:1.1rem; }
+.detalhe-compra { display:flex; gap:10px; align-items:center; margin-top:20px; flex-wrap:wrap; }

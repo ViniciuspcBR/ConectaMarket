@@ -1,0 +1,51 @@
+/* Admin.css */
+.admin-abas { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:24px; }
+.admin-aba {
+  padding: 9px 22px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.15s;
+  border: 2px solid transparent;
+}
+.admin-aba:hover       { background: #e2e8f0; color: #1e293b; }
+.admin-aba--ativa      { background: #1e293b; color: #fff; border-color: #1e293b; }
+
+.admin-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  margin-bottom: 4px;
+}
+.admin-card  { text-align: center; padding: 22px 16px; }
+.admin-label { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: #64748b; }
+.admin-valor { font-size: 1.9rem; font-weight: 800; margin-top: 6px; }
+
+.status-grid { display: flex; flex-wrap: wrap; gap: 14px; }
+.status-item { display: flex; align-items: center; gap: 8px; font-size: 0.88rem; }
+
+.overflow-x  { overflow-x: auto; }
+.admin-count { font-size: 0.85rem; color: #64748b; margin-bottom: 12px; }
+
+.admin-tabela { width: 100%; border-collapse: collapse; font-size: 0.87rem; min-width: 600px; }
+.admin-tabela th {
+  background: #1e293b;
+  color: #fff;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.admin-tabela td {
+  padding: 9px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+.admin-tabela tr:last-child td { border-bottom: none; }
+.admin-tabela tr:hover td { background: #f8fafc; }
+
+.btn-sm      { padding: 6px 12px; font-size: 0.82rem; border-radius: 5px; }
+.btn-success { background: #16a34a; color: #fff; }
+.btn-success:hover { background: #15803d; }

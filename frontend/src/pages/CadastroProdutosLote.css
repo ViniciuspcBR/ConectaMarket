@@ -1,0 +1,30 @@
+/* CadastroProdutosLote.css */
+.lote-scroll { overflow-x: auto; padding: 0; }
+
+.lote-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+.lote-tabela th {
+  background: #1e293b;
+  color: #fff;
+  padding: 10px 10px;
+  text-align: left;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+.lote-tabela td { padding: 6px 6px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+.lote-tabela tr:hover td { background: #f8fafc; }
+
+.lote-tabela--input input,
+.lote-tabela--input select {
+  padding: 7px 10px;
+  font-size: 0.85rem;
+  min-width: 100px;
+}
+.lote-tabela--input td:nth-child(2) input { min-width: 180px; }
+.lote-tabela--input td:nth-child(7) input { min-width: 160px; }
+
+.lote-num { color: #94a3b8; font-weight: 700; text-align: center; width: 32px; }
+.lote-del { padding: 5px 10px; font-size: 1rem; border-radius: 4px; }

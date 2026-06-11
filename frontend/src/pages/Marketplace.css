@@ -1,0 +1,19 @@
+/* src/pages/Marketplace.css */
+.mk-abas { display: flex; gap: 8px; margin-bottom: 24px; }
+.mk-abas button {
+  padding: 10px 24px; border-radius: 8px; background: #f1f5f9;
+  color: #64748b; font-weight: 600; font-size: 0.9rem;
+}
+.mk-abas .aba-ativa { background: #2563eb; color: #fff; }
+
+.mk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
+.mk-card { text-align: center; padding: 24px; }
+.mk-card-logo { font-size: 2.5rem; margin-bottom: 12px; }
+.mk-card-logo img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; }
+.mk-card h3  { font-size: 1rem; color: #1e293b; }
+.mk-card p   { font-size: 0.85rem; color: #64748b; margin-top: 6px; }
+.mk-preco    { font-size: 1.1rem; font-weight: 800; color: #2563eb; margin-top: 10px; }

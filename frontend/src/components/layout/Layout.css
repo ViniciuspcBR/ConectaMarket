@@ -1,0 +1,103 @@
+/* Layout.css */
+.layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Sidebar — FIXA ── */
+.sidebar {
+  width: 230px;
+  height: 100vh;
+  background: #1e293b;
+  color: #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid #334155;
+  flex-shrink: 0;
+}
+.logo-icon { font-size: 1.6rem; }
+.logo-text  { font-size: 1.1rem; font-weight: 800; letter-spacing: 1px; color: #f1f5f9; }
+
+.sidebar-nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 12px;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #94a3b8;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.nav-item:hover   { background: #334155; color: #f1f5f9; }
+.nav-item--active { background: #2563eb; color: #fff; }
+
+.nav-divider {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #475569;
+  padding: 12px 14px 4px;
+  flex-shrink: 0;
+}
+
+/* Footer sempre visível no fundo da sidebar */
+.sidebar-footer {
+  padding: 16px 20px 20px;
+  border-top: 1px solid #334155;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.sidebar-user { font-size: 0.85rem; font-weight: 600; color: #f1f5f9; }
+.btn-logout   {
+  margin-top: 6px;
+  background: #7f1d1d;
+  color: #fecaca;
+  padding: 8px;
+  font-size: 0.85rem;
+  border-radius: 6px;
+}
+.btn-logout:hover { background: #991b1b; }
+
+/* ── Conteúdo principal — scroll independente ── */
+.main-content {
+  flex: 1;
+  padding: 32px;
+  overflow-y: auto;
+  height: 100vh;
+}
+
+.cart-badge {
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 1px 7px;
+  border-radius: 999px;
+  margin-left: 4px;
+}

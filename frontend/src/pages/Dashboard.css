@@ -1,0 +1,25 @@
+/* src/pages/Dashboard.css */
+.dashboard-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.dash-card { text-align: center; padding: 28px 20px; }
+.dash-label { font-size: 0.85rem; font-weight: 600; text-transform: uppercase;
+              letter-spacing: .5px; color: #64748b; }
+.dash-value { font-size: 2rem; font-weight: 800; margin-top: 8px; }
+
+.dash-card--blue   .dash-value { color: #2563eb; }
+.dash-card--green  .dash-value { color: #16a34a; }
+.dash-card--purple .dash-value { color: #7c3aed; }
+.dash-card--orange .dash-value { color: #ea580c; }
+
+.dash-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.dash-table th { text-align: left; padding: 10px 14px; background: #f8fafc;
+                 color: #64748b; font-weight: 600; border-bottom: 1px solid #e2e8f0; }
+.dash-table td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; }
+.dash-table tr:last-child td { border-bottom: none; }
+.dash-table tr:hover td { background: #f8fafc; }
+
+.btn-sm { padding: 6px 14px; font-size: 0.82rem; border-radius: 5px; }

@@ -1,0 +1,46 @@
+/* Campanhas.css */
+.campanha-form { display:flex; flex-direction:column; gap:14px; }
+.campanha-row  { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+
+.campanha-produtos {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  max-height:220px;
+  overflow-y:auto;
+  padding:10px;
+  border:1px solid #e2e8f0;
+  border-radius:8px;
+  background:#fafafa;
+}
+.prod-check {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 12px;
+  border-radius:20px;
+  background:#f1f5f9;
+  font-size:0.85rem;
+  cursor:pointer;
+  transition:background 0.15s;
+  width:100%;
+}
+.prod-check input { width:auto; flex-shrink:0; }
+.prod-check--ativo { background:#dbeafe; color:#1d4ed8; font-weight:600; }
+
+.campanha-lista { display:flex; flex-direction:column; gap:16px; }
+.campanha-card h3 { font-size:1rem; color:#1e293b; }
+.campanha-info {
+  display:flex;
+  gap:20px;
+  margin-top:12px;
+  flex-wrap:wrap;
+  font-size:0.88rem;
+  color:#475569;
+}
+
+.field { display:flex; flex-direction:column; gap:5px; }
+.field label { font-size:0.85rem; font-weight:600; color:#374151; }
+.btn-sm { padding:6px 14px; font-size:0.82rem; border-radius:5px; }
+
+@media(max-width:700px) { .campanha-row { grid-template-columns:1fr 1fr; } }

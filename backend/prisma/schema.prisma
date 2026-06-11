@@ -1,0 +1,213 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMINISTRADOR
+  LOJISTA
+  FORNECEDOR
+  EMPREENDEDOR
+  CLIENTE
+}
+
+enum StatusPedido {
+  PENDENTE
+  CONFIRMADO
+  EM_PREPARO
+  ENVIADO
+  ENTREGUE
+  CANCELADO
+}
+
+enum TipoProduto {
+  PRODUTO
+  SERVICO
+}
+
+enum FormaPagamento {
+  PIX
+  CARTAO_CREDITO
+  CARTAO_DEBITO
+  BOLETO
+}
+
+model Usuario {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  email     String   @unique
+  senha     String
+  telefone  String?
+  role      Role     @default(CLIENTE)
+  ativo     Boolean  @default(true)
+  criadoEm DateTime @default(now())
+
+  loja         Loja?
+  fornecedor   Fornecedor?
+  empreendedor Empreendedor?
+  pedidos      Pedido[]
+  avaliacoes   Avaliacao[]
+
+  @@map("usuarios")
+}
+
+model Loja {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  descricao String?
+  cnpj      String?  @unique
+  endereco  String?
+  logo      String?
+  ativa     Boolean  @default(true)
+  criadoEm DateTime @default(now())
+
+  usuarioId Int     @unique
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+
+  produtos Produto[]
+  pedidos  Pedido[]
+
+  @@map("lojas")
+}
+
+model Fornecedor {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  descricao String?
+  cnpj      String?  @unique
+  contato   String?
+  ativo     Boolean  @default(true)
+  criadoEm DateTime @default(now())
+
+  usuarioId Int     @unique
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+
+  produtos Produto[]
+
+  @@map("fornecedores")
+}
+
+model Empreendedor {
+  id          Int      @id @default(autoincrement())
+  nomeNegocio String
+  descricao   String?
+  categoria   String?
+  cpf         String?  @unique
+  ativo       Boolean  @default(true)
+  criadoEm   DateTime @default(now())
+
+  usuarioId Int     @unique
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+
+  produtos Produto[]
+
+  @@map("empreendedores")
+}
+
+model Produto {
+  id        Int         @id @default(autoincrement())
+  nome      String
+  descricao String?
+  preco     Float
+  estoque   Int         @default(0)
+  imagem    String?
+  tipo      TipoProduto @default(PRODUTO)
+  categoria String?
+  ativo     Boolean     @default(true)
+  criadoEm DateTime    @default(now())
+
+  lojaId         Int?
+  loja           Loja?         @relation(fields: [lojaId], references: [id])
+  fornecedorId   Int?
+  fornecedor     Fornecedor?   @relation(fields: [fornecedorId], references: [id])
+  empreendedorId Int?
+  empreendedor   Empreendedor? @relation(fields: [empreendedorId], references: [id])
+
+  itensPedido ItemPedido[]
+  campanhas   CampanhaProduto[]
+  avaliacoes  Avaliacao[]
+
+  @@map("produtos")
+}
+
+model Pedido {
+  id               Int            @id @default(autoincrement())
+  total            Float
+  status           StatusPedido   @default(PENDENTE)
+  formaPagamento   FormaPagamento @default(PIX)
+  enderecoEntrega  String?
+  excluido         Boolean        @default(false)
+  observacao       String?
+  criadoEm        DateTime       @default(now())
+  atualizadoEm    DateTime       @updatedAt
+
+  clienteId Int
+  cliente   Usuario @relation(fields: [clienteId], references: [id])
+
+  lojaId Int?
+  loja   Loja? @relation(fields: [lojaId], references: [id])
+
+  itens ItemPedido[]
+
+  @@map("pedidos")
+}
+
+model ItemPedido {
+  id         Int   @id @default(autoincrement())
+  quantidade Int
+  precoUnit  Float
+  subtotal   Float
+
+  pedidoId Int
+  pedido   Pedido @relation(fields: [pedidoId], references: [id])
+
+  produtoId Int
+  produto   Produto @relation(fields: [produtoId], references: [id])
+
+  @@map("itens_pedido")
+}
+
+model Campanha {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  descricao String?
+  tipo      String
+  valor     Float
+  ativa     Boolean  @default(true)
+  inicio    DateTime
+  fim       DateTime
+  criadoEm DateTime @default(now())
+
+  produtos CampanhaProduto[]
+
+  @@map("campanhas")
+}
+
+model CampanhaProduto {
+  campanhaId Int
+  campanha   Campanha @relation(fields: [campanhaId], references: [id])
+  produtoId  Int
+  produto    Produto  @relation(fields: [produtoId], references: [id])
+
+  @@id([campanhaId, produtoId])
+  @@map("campanhas_produtos")
+}
+
+model Avaliacao {
+  id         Int      @id @default(autoincrement())
+  nota       Int
+  comentario String?
+  criadoEm  DateTime @default(now())
+
+  usuarioId Int
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+
+  produtoId Int
+  produto   Produto @relation(fields: [produtoId], references: [id])
+
+  @@map("avaliacoes")
+}

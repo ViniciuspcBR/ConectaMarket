@@ -1,0 +1,18 @@
+# Dependências
+node_modules/
+*/node_modules/
+
+# Variáveis de ambiente — NUNCA sobe para o GitHub!
+.env
+backend/.env
+
+# Build do frontend
+frontend/dist/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
