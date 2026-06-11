@@ -1,100 +1,270 @@
-# Marketplace Colaborativo ABADEUS × UNESC
+# ConectMarket
 
-Primeira vez (ou após down -v):
-# 1. Sobe tudo
-docker-compose up --build
+Plataforma de marketplace híbrido (B2B e B2C) desenvolvida para conectar consumidores, lojistas, fornecedores e empreendedores locais em um único ambiente digital.
 
-# 2. Em outro terminal — cria as tabelas
-docker exec -it marketplace_backend npx prisma migrate dev --name init
+O projeto foi desenvolvido como Projeto Interdisciplinar do curso de Ciência da Computação da UNESC, com foco na aplicação prática de conceitos de desenvolvimento web, banco de dados e integração de sistemas.
 
-# 3. Popula o banco com dados iniciais
-docker exec marketplace_backend node prisma/seed.js
+---
 
------------------------------------------------------------------------
+## Objetivo
 
-Do dia a dia (após a primeira vez):
-Só isso — dados já estão salvos no volume
-docker-compose up
+O ConectMarket tem como objetivo fornecer uma plataforma acessível para divulgação, comercialização e gerenciamento de produtos e serviços, contribuindo para a transformação digital de pequenos empreendedores e estabelecimentos comerciais.
 
-Se der down -v (apaga tudo) — repete o processo completo:
-bashdocker-compose down -v
-docker-compose up --build
-docker exec -it marketplace_backend npx prisma migrate dev --name init
-docker exec marketplace_backend node prisma/seed.js
+---
 
-Acessa http://localhost:3000 e testa com admin@abadeus.com / senha123.
+## Tecnologias Utilizadas
 
-*! Nunca use down -v no dia a dia — ele apaga todos os dados do banco. Use só down para parar. !*
+### Frontend
 
-*O banco já tem 40+ produtos em 8 categorias prontos para demonstrar na banca.*
+* React
+* Vite
+* React Router
+* Context API
+* CSS
 
-Plataforma híbrida (B2B + B2C) conectando fornecedores, lojistas e comunidade local.  
-Projeto interdisciplinar — 4ª fase Ciência da Computação — UNESC 2026/01.
+### Backend
 
-# Tecnologias
+* Node.js
+* Express
+* Prisma ORM
+* JWT (JSON Web Token)
 
-| Camada        | Tecnologia             |
-|---------------|------------------------|
-| Frontend      | React + Vite           |
-| Backend       | Node.js + Express      |
-| Banco de dados| PostgreSQL + Prisma    |
-| Autenticação  | JWT                    |
-| Infra         | Docker + Docker Compose|
+### Banco de Dados
 
------------------------------------------------------------------------
+* PostgreSQL
 
-# Rodar com Docker
+### Infraestrutura
 
-Instalar o **Docker Desktop**: https://www.docker.com/products/docker-desktop/
+* Docker
+* Docker Compose
+* Nginx
 
-# Passos
+---
+
+## Funcionalidades
+
+### Usuários
+
+* Cadastro
+* Login
+* Autenticação JWT
+* Controle de acesso por perfil
+
+### Produtos
+
+* Cadastro de produtos
+* Edição de produtos
+* Exclusão de produtos
+* Catálogo de produtos
+
+### Marketplace
+
+* Visualização de produtos
+* Carrinho de compras
+* Checkout
+* Histórico de pedidos
+
+### Gestão
+
+* Dashboard administrativo
+* Gestão de usuários
+* Gestão de campanhas
+* Gestão de pedidos
+* Gestão de avaliações
+
+### Perfis do Sistema
+
+* Administrador
+* Lojista
+* Fornecedor
+* Empreendedor
+* Cliente
+
+---
+
+# Estrutura do Projeto
+
+```text
+conectmarket/
+│
+├── backend/
+│   ├── prisma/
+│   ├── src/
+│   │   ├── controllers/
+│   │   ├── routes/
+│   │   ├── middlewares/
+│   │   ├── config/
+│   │   ├── app.js
+│   │   └── server.js
+│   ├── Dockerfile
+│   └── package.json
+│
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── context/
+│   │   ├── pages/
+│   │   ├── services/
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   ├── Dockerfile
+│   └── package.json
+│
+├── docker-compose.yml
+└── README.md
+```
+
+---
+
+# Executando com Docker
+
+## Pré-requisitos
+
+* Docker Desktop instalado
+
+Download:
+
+https://www.docker.com/products/docker-desktop/
+
+---
+
+## Primeira execução
+
+### 1. Clonar o repositório
+
 ```bash
-# 1. Clone o repositório
-git clone https://github.com/seu-usuario/marketplace.git
-cd marketplace
+git clone https://github.com/SEU-USUARIO/conectmarket.git
+cd conectmarket
+```
 
-# 2. Sobe tudo (banco + backend + frontend)
+### 2. Construir e iniciar os containers
+
+```bash
 docker-compose up --build
 ```
 
-Pronto! Acesse **http://localhost:3000** no navegador.
+### 3. Criar as tabelas do banco
 
-Para parar:
+Em outro terminal:
+
+```bash
+docker exec -it marketplace_backend npx prisma migrate dev --name init
+```
+
+### 4. Popular o banco
+
+```bash
+docker exec marketplace_backend node prisma/seed.js
+```
+
+---
+
+## Acessar o sistema
+
+Frontend:
+
+```text
+http://localhost:3000
+```
+
+Backend:
+
+```text
+http://localhost:3001
+```
+
+---
+
+# Execução diária
+
+Após a primeira configuração:
+
+```bash
+docker-compose up
+```
+
+---
+
+# Parar os containers
+
 ```bash
 docker-compose down
 ```
 
-Para parar e apagar os dados do banco:
+---
+
+# Reiniciar completamente o ambiente
+
+⚠️ Atenção: este procedimento remove todos os dados do banco.
+
 ```bash
 docker-compose down -v
+docker-compose up --build
+
+docker exec -it marketplace_backend npx prisma migrate dev --name init
+
+docker exec marketplace_backend node prisma/seed.js
 ```
 
 ---
 
-## 💻 Rodar localmente (sem Docker)
+# Banco de Dados
 
-```bash
-# Backend
-cd backend
-cp .env.example .env
-npm install
-npx prisma migrate dev
-npm run dev
+O sistema utiliza PostgreSQL como banco de dados relacional.
 
-# Frontend (outro terminal)
-cd frontend
-npm install
-npm run dev
-```
+O acesso é realizado através do Prisma ORM, responsável pelo gerenciamento das entidades e migrações.
+
+Principais entidades:
+
+* Usuário
+* Loja
+* Fornecedor
+* Empreendedor
+* Produto
+* Pedido
+* ItemPedido
+* Campanha
+* Avaliação
 
 ---
 
-## Perfis de Usuário
+# Autenticação
 
-| Perfil        | Pode fazer                                   | Email                                        | Senha
-|---------------|----------------------------------------------|----------------------------------------------|---------------------------
-| ADMINISTRADOR | Tudo                                         | admin@abadeus.com                            | Todos senha123
-| LOJISTA       | Loja, produtos, pedidos, campanhas           | mercado@abadeus.com                          |
-| FORNECEDOR    | Produtos e pedidos B2B                       | fornecedor@abadeus.com                       |
-| EMPREENDEDOR  | Produtos/serviços na comunidade              | salao@abadeus.com / pizzaria@abadeus.com     |
-| CLIENTE       | Navegar, comprar, avaliar                    | cliente@abadeus.com                          |
+O sistema utiliza JWT (JSON Web Token) para autenticação e autorização dos usuários.
+
+As permissões são controladas de acordo com o perfil associado à conta.
+
+---
+
+# Usuários de Demonstração
+
+Todos os usuários possuem a senha:
+
+```text
+senha123
+```
+
+| Perfil        | E-mail                                                  |
+| ------------- | ------------------------------------------------------- |
+| Administrador | [admin@abadeus.com](mailto:admin@abadeus.com)           |
+| Lojista       | [mercado@abadeus.com](mailto:mercado@abadeus.com)       |
+| Fornecedor    | [fornecedor@abadeus.com](mailto:fornecedor@abadeus.com) |
+| Empreendedor  | [salao@abadeus.com](mailto:salao@abadeus.com)           |
+| Empreendedor  | [pizzaria@abadeus.com](mailto:pizzaria@abadeus.com)     |
+| Cliente       | [cliente@abadeus.com](mailto:cliente@abadeus.com)       |
+
+---
+
+# Desenvolvido por
+
+GABRIEL BORGES ROCHA
+JOÃO VITOR MONDARDO DOS SANTOS
+MATHEUS KJILLIM LENZ
+VILSON VINíCIUS ANACLETO FRASSETTO
+VINICIUS PEREIRA CARDOSO 
+
+Projeto desenvolvido para as disciplinas:
+* Desenvolvimento de Aplicações II
+* Gerenciamento de Dados II
+
+Curso de Ciência da Computação – UNESC.
