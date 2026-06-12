@@ -16,7 +16,7 @@ export default function Campanhas() {
   const [buscaProd,   setBuscaProd]   = useState("");
 
   async function carregar() {
-    campanhaService.listar().then((r) => setCampanhas(r.data));
+    campanhaService.listarMinhas().then((r) => setCampanhas(r.data));
     produtoService.listar({ meus: true }).then((r) => setProdutos(r.data));
   }
 

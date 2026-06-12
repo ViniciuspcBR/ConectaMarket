@@ -29,6 +29,7 @@ async function listar(req, res, next) {
       }
     }
 
+    const agora = new Date();
     const produtos = await prisma.produto.findMany({
       where,
       include: {
@@ -36,17 +37,37 @@ async function listar(req, res, next) {
         fornecedor:   { select: { id: true, nome: true } },
         empreendedor: { select: { id: true, nomeNegocio: true } },
         avaliacoes:   { select: { nota: true } },
+        campanhas: {
+          where: {
+            campanha: { ativa: true, inicio: { lte: agora }, fim: { gte: agora } },
+          },
+          include: { campanha: true },
+        },
       },
       orderBy: { criadoEm: "desc" },
     });
 
-    const resultado = produtos.map((p) => ({
-      ...p,
-      mediaAvaliacao:
-        p.avaliacoes.length > 0
-          ? p.avaliacoes.reduce((acc, a) => acc + a.nota, 0) / p.avaliacoes.length
-          : null,
-    }));
+    const resultado = produtos.map((p) => {
+      const campanhaAtiva = p.campanhas?.[0]?.campanha || null;
+      let precoComDesconto = null;
+      if (campanhaAtiva && (campanhaAtiva.tipo === "DESCONTO" || campanhaAtiva.tipo === "CASHBACK")) {
+        precoComDesconto = p.preco * (1 - campanhaAtiva.valor / 100);
+      }
+      return {
+        ...p,
+        mediaAvaliacao:
+          p.avaliacoes.length > 0
+            ? p.avaliacoes.reduce((acc, a) => acc + a.nota, 0) / p.avaliacoes.length
+            : null,
+        campanhaAtiva: campanhaAtiva ? {
+          id: campanhaAtiva.id,
+          nome: campanhaAtiva.nome,
+          tipo: campanhaAtiva.tipo,
+          valor: campanhaAtiva.valor,
+        } : null,
+        precoComDesconto,
+      };
+    });
 
     res.json(resultado);
   } catch (err) { next(err); }
@@ -64,7 +85,25 @@ async function buscarPorId(req, res, next) {
       },
     });
     if (!produto) return res.status(404).json({ erro: "Produto não encontrado." });
-    res.json(produto);
+
+    const agora = new Date();
+    const campanhaAtiva = produto.campanhas
+      ?.map((c) => c.campanha)
+      ?.find((c) => c.ativa && new Date(c.inicio) <= agora && new Date(c.fim) >= agora) || null;
+
+    let precoComDesconto = null;
+    if (campanhaAtiva && (campanhaAtiva.tipo === "DESCONTO" || campanhaAtiva.tipo === "CASHBACK")) {
+      precoComDesconto = produto.preco * (1 - campanhaAtiva.valor / 100);
+    }
+
+    res.json({
+      ...produto,
+      campanhaAtiva: campanhaAtiva ? {
+        id: campanhaAtiva.id, nome: campanhaAtiva.nome,
+        tipo: campanhaAtiva.tipo, valor: campanhaAtiva.valor,
+      } : null,
+      precoComDesconto,
+    });
   } catch (err) { next(err); }
 }
 

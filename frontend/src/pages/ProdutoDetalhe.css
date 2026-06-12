@@ -29,3 +29,29 @@
 .qtd-control button { width:32px; height:32px; border-radius:6px; background:#f1f5f9; color:#1e293b; font-size:1.1rem; font-weight:700; padding:0; display:flex; align-items:center; justify-content:center; }
 .qtd-control span { font-weight:700; min-width:28px; text-align:center; font-size:1.1rem; }
 .detalhe-compra { display:flex; gap:10px; align-items:center; margin-top:20px; flex-wrap:wrap; }
+
+/* Desconto de campanha */
+.detalhe-preco-original {
+  font-size: 1rem;
+  color: #94a3b8;
+  text-decoration: line-through;
+}
+.detalhe-preco--desconto {
+  color: #dc2626;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.detalhe-desconto-badge {
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 6px;
+}
+.detalhe-campanha-info {
+  font-size: 0.85rem;
+  color: #16a34a;
+  margin-top: 4px;
+}

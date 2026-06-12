@@ -122,7 +122,7 @@ async function main() {
 
   // ── Serviços — Saúde e Beleza ─────────────────────────────────
   const servicosBeauty = [
-    { nome: "Corte de Cabelo Feminino", descricao: "Corte com lavagem e finalização", preco: 65.00, estoque: 999, imagem: "https://images.unsplash.com/photo-1560066984-138daaa0ad8d?w=400&h=300&fit=crop", categoria: "Saúde e Beleza" },
+    { nome: "Corte de Cabelo Feminino", descricao: "Corte com lavagem e finalização", preco: 65.00, estoque: 999, imagem: "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=400&h=300&fit=crop", categoria: "Saúde e Beleza" },
     { nome: "Coloração Completa", descricao: "Coloração com produtos profissionais", preco: 150.00, estoque: 999, imagem: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=300&fit=crop", categoria: "Saúde e Beleza" },
     { nome: "Manicure e Pedicure", descricao: "Tratamento completo das unhas", preco: 55.00, estoque: 999, imagem: "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=300&fit=crop", categoria: "Saúde e Beleza" },
     { nome: "Massagem Relaxante 1h", descricao: "Massagem terapêutica com óleos essenciais", preco: 120.00, estoque: 999, imagem: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&h=300&fit=crop", categoria: "Saúde e Beleza" },

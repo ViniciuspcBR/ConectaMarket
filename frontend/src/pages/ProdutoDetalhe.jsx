@@ -22,7 +22,8 @@ export default function ProdutoDetalhe() {
   }, [id]);
 
   function handleAdicionarCarrinho() {
-    adicionar(produto, quantidade);
+    const precoFinal = produto.precoComDesconto ?? produto.preco;
+    adicionar({ ...produto, preco: precoFinal }, quantidade);
     addToast(`"${produto.nome}" adicionado ao carrinho! 🛒`);
   }
 
@@ -66,7 +67,20 @@ export default function ProdutoDetalhe() {
             </p>
           )}
 
-          <p className="detalhe-preco">R$ {produto.preco.toFixed(2)}</p>
+          {produto.campanhaAtiva && produto.precoComDesconto ? (
+            <div className="detalhe-preco-bloco">
+              <p className="detalhe-preco-original">R$ {produto.preco.toFixed(2)}</p>
+              <p className="detalhe-preco detalhe-preco--desconto">
+                R$ {produto.precoComDesconto.toFixed(2)}
+                <span className="detalhe-desconto-badge">-{produto.campanhaAtiva.valor}%</span>
+              </p>
+              <p className="detalhe-campanha-info">
+                🎯 Campanha: <strong>{produto.campanhaAtiva.nome}</strong> ({produto.campanhaAtiva.tipo === "CASHBACK" ? "Cashback" : "Desconto"} de {produto.campanhaAtiva.valor}%)
+              </p>
+            </div>
+          ) : (
+            <p className="detalhe-preco">R$ {produto.preco.toFixed(2)}</p>
+          )}
           {produto.descricao && <p className="detalhe-desc">{produto.descricao}</p>}
 
           <p className="detalhe-estoque">

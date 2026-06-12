@@ -61,16 +61,33 @@ async function criar(req, res, next) {
     const { lojaId, observacao, itens, formaPagamento, enderecoEntrega } = req.body;
 
     const ids = itens.map((i) => i.produtoId);
-    const produtos = await prisma.produto.findMany({ where: { id: { in: ids } } });
+    const agora = new Date();
+    const produtos = await prisma.produto.findMany({
+      where: { id: { in: ids } },
+      include: {
+        campanhas: {
+          where: { campanha: { ativa: true, inicio: { lte: agora }, fim: { gte: agora } } },
+          include: { campanha: true },
+        },
+      },
+    });
 
     const itensMontados = itens.map((item) => {
       const produto = produtos.find((p) => p.id === item.produtoId);
       if (!produto) throw { status: 400, message: `Produto ${item.produtoId} não encontrado.` };
+
+      // Aplica desconto da campanha ativa, se houver (DESCONTO ou CASHBACK)
+      let precoFinal = produto.preco;
+      const campanha = produto.campanhas?.[0]?.campanha;
+      if (campanha && (campanha.tipo === "DESCONTO" || campanha.tipo === "CASHBACK")) {
+        precoFinal = produto.preco * (1 - campanha.valor / 100);
+      }
+
       return {
         produtoId:  item.produtoId,
         quantidade: item.quantidade,
-        precoUnit:  produto.preco,
-        subtotal:   produto.preco * item.quantidade,
+        precoUnit:  precoFinal,
+        subtotal:   precoFinal * item.quantidade,
       };
     });
 

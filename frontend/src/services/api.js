@@ -47,9 +47,10 @@ export const fornecedorService = {
 };
 
 export const campanhaService = {
-  listar:    ()       => api.get("/campanhas"),
-  criar:     (d)      => api.post("/campanhas",      d),
-  atualizar: (id, d)  => api.put(`/campanhas/${id}`, d),
+  listar:       ()       => api.get("/campanhas"),
+  listarMinhas: ()       => api.get("/campanhas/minhas"),
+  criar:        (d)      => api.post("/campanhas",      d),
+  atualizar:    (id, d)  => api.put(`/campanhas/${id}`, d),
 };
 
 export const avaliacaoService = {

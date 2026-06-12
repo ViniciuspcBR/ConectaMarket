@@ -34,7 +34,7 @@ export default function Admin() {
     setErro(null);
     try {
       const { data } = await api.get(ENDPOINTS[abaAtual]);
-      setDados(data);
+      setDados({ aba: abaAtual, valor: data });
     } catch (e) {
       const msg = e.response?.data?.erro || "Erro ao carregar dados.";
       setErro(msg);
@@ -43,10 +43,14 @@ export default function Admin() {
     }
   }, [addToast]);
 
-  // Limpa dados ao trocar de aba para não mostrar dados antigos brevemente
-  useEffect(() => { setDados(null); }, [aba]);
+  // Único efeito: ao trocar de aba, limpa e recarrega
+  useEffect(() => {
+    setDados(null);
+    carregar(aba);
+  }, [aba, carregar]);
 
-  useEffect(() => { carregar(aba); }, [aba, carregar]);
+  // Só renderiza se os dados carregados correspondem à aba atual
+  const dadosAtuais = dados && dados.aba === aba ? dados.valor : null;
 
   // ── Ações ──────────────────────────────────────────────────────
   async function acao(fn, mensagem, abaRecarregar) {
@@ -82,20 +86,20 @@ export default function Admin() {
       </div>
 
       {/* Estados de carregamento/erro */}
-      {!dados && !erro && <p style={{color:"#94a3b8", padding:"20px 0"}}>Carregando...</p>}
+      {!dadosAtuais && !erro && <p style={{color:"#94a3b8", padding:"20px 0"}}>Carregando...</p>}
       {erro   && <p style={{color:"#dc2626", padding:"20px 0"}}>❌ {erro}</p>}
 
-      {dados && (
+      {dadosAtuais && (
         <>
           {/* ── RESUMO ─────────────────────────────────────────── */}
           {aba === "Resumo" && (
             <div>
               <div className="admin-cards">
                 {[
-                  { label:"Usuários",       valor: dados.totalUsuarios, cor:"#2563eb" },
-                  { label:"Produtos Ativos",valor: dados.totalProdutos, cor:"#16a34a" },
-                  { label:"Total Pedidos",  valor: dados.totalPedidos,  cor:"#7c3aed" },
-                  { label:"Lojas Ativas",   valor: dados.totalLojas,    cor:"#ea580c" },
+                  { label:"Usuários",       valor: dadosAtuais.totalUsuarios, cor:"#2563eb" },
+                  { label:"Produtos Ativos",valor: dadosAtuais.totalProdutos, cor:"#16a34a" },
+                  { label:"Total Pedidos",  valor: dadosAtuais.totalPedidos,  cor:"#7c3aed" },
+                  { label:"Lojas Ativas",   valor: dadosAtuais.totalLojas,    cor:"#ea580c" },
                 ].map((c) => (
                   <div key={c.label} className="admin-card card">
                     <p className="admin-label">{c.label}</p>
@@ -105,7 +109,7 @@ export default function Admin() {
                 <div className="admin-card card">
                   <p className="admin-label">Receita (Entregues)</p>
                   <p className="admin-valor" style={{color:"#16a34a", fontSize:"1.4rem"}}>
-                    R$ {dados.receitaTotal.toFixed(2)}
+                    R$ {dadosAtuais.receitaTotal.toFixed(2)}
                   </p>
                 </div>
               </div>
@@ -113,7 +117,7 @@ export default function Admin() {
               <div className="card" style={{marginTop:24}}>
                 <h3 style={{marginBottom:16}}>Pedidos por Status</h3>
                 <div className="status-grid">
-                  {dados.pedidosPorStatus.map((p) => (
+                  {dadosAtuais.pedidosPorStatus.map((p) => (
                     <div key={p.status} className="status-item">
                       <BadgeStatus s={p.status} />
                       <strong>{p._count.status}</strong>
@@ -125,9 +129,9 @@ export default function Admin() {
           )}
 
           {/* ── USUÁRIOS ───────────────────────────────────────── */}
-          {aba === "Usuários" && Array.isArray(dados) && (
+          {aba === "Usuários" && Array.isArray(dadosAtuais) && (
             <div className="card overflow-x">
-              <p className="admin-count">{dados.length} usuário(s) encontrado(s)</p>
+              <p className="admin-count">{dadosAtuais.length} usuário(s) encontrado(s)</p>
               <table className="admin-tabela">
                 <thead>
                   <tr>
@@ -136,7 +140,7 @@ export default function Admin() {
                   </tr>
                 </thead>
                 <tbody>
-                  {dados.map((u) => (
+                  {dadosAtuais.map((u) => (
                     <tr key={u.id}>
                       <td>{u.id}</td>
                       <td>{u.nome}</td>
@@ -169,15 +173,15 @@ export default function Admin() {
           )}
 
           {/* ── LOJAS ──────────────────────────────────────────── */}
-          {aba === "Lojas" && Array.isArray(dados) && (
+          {aba === "Lojas" && Array.isArray(dadosAtuais) && (
             <div className="card overflow-x">
-              <p className="admin-count">{dados.length} loja(s) encontrada(s)</p>
+              <p className="admin-count">{dadosAtuais.length} loja(s) encontrada(s)</p>
               <table className="admin-tabela">
                 <thead>
                   <tr><th>#</th><th>Nome</th><th>Proprietário</th><th>Produtos</th><th>Status</th><th>Ações</th></tr>
                 </thead>
                 <tbody>
-                  {dados.map((l) => (
+                  {dadosAtuais.map((l) => (
                     <tr key={l.id}>
                       <td>{l.id}</td>
                       <td>{l.nome}</td>
@@ -203,10 +207,10 @@ export default function Admin() {
           )}
 
           {/* ── PRODUTOS ───────────────────────────────────────── */}
-          {aba === "Produtos" && Array.isArray(dados) && (
+          {aba === "Produtos" && Array.isArray(dadosAtuais) && (
             <div className="card overflow-x">
               <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14}}>
-                <p className="admin-count">{dados.length} produto(s)</p>
+                <p className="admin-count">{dadosAtuais.length} produto(s)</p>
                 <button className="btn-primary btn-sm" onClick={() => navigate("/produtos/novo")}>
                   ➕ Novo Produto
                 </button>
@@ -219,7 +223,7 @@ export default function Admin() {
                   </tr>
                 </thead>
                 <tbody>
-                  {dados.map((p) => (
+                  {dadosAtuais.map((p) => (
                     <tr key={p.id}>
                       <td>{p.id}</td>
                       <td>{p.nome}</td>
@@ -257,9 +261,9 @@ export default function Admin() {
           )}
 
           {/* ── PEDIDOS ────────────────────────────────────────── */}
-          {aba === "Pedidos" && Array.isArray(dados) && (
+          {aba === "Pedidos" && Array.isArray(dadosAtuais) && (
             <div className="card overflow-x">
-              <p className="admin-count">{dados.length} pedido(s)</p>
+              <p className="admin-count">{dadosAtuais.length} pedido(s)</p>
               <table className="admin-tabela">
                 <thead>
                   <tr>
@@ -268,7 +272,7 @@ export default function Admin() {
                   </tr>
                 </thead>
                 <tbody>
-                  {dados.map((p) => (
+                  {dadosAtuais.map((p) => (
                     <tr key={p.id}>
                       <td>{p.id}</td>
                       <td style={{fontSize:"0.83rem"}}>{p.cliente?.nome}</td>
