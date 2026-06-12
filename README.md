@@ -154,7 +154,7 @@ docker-compose up --build
 Em outro terminal:
 
 ```bash
-docker exec -it marketplace_backend npx prisma migrate dev --name init
+docker exec -it marketplace_backend npx prisma migrate dev --name v7_fixes
 ```
 
 ### 4. Popular o banco
