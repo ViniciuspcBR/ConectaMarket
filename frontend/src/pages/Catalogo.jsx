@@ -100,16 +100,26 @@ export default function Catalogo() {
                   : null
                 }
                 <span className="produto-sem-img" style={{display: p.imagem ? "none" : "flex"}}>📦</span>
-                {p.campanhaAtiva && p.precoComDesconto && (
+                {p.campanhaAtiva?.tipo === "DESCONTO" && p.precoComDesconto && (
                   <span className="produto-desconto-badge">
                     -{p.campanhaAtiva.valor}%
+                  </span>
+                )}
+                {p.campanhaAtiva?.tipo === "CASHBACK" && (
+                  <span className="produto-cashback-badge">
+                    💰 {p.campanhaAtiva.valor}% cashback
+                  </span>
+                )}
+                {p.campanhaAtiva?.tipo === "BRINDE" && (
+                  <span className="produto-brinde-badge">
+                    🎁 Brinde
                   </span>
                 )}
               </div>
               <div className="produto-info">
                 <p className="produto-nome">{p.nome}</p>
                 <p className="produto-categoria">{p.categoria || "—"}</p>
-                {p.campanhaAtiva && p.precoComDesconto ? (
+                {p.campanhaAtiva?.tipo === "DESCONTO" && p.precoComDesconto ? (
                   <>
                     <p className="produto-preco-original">R$ {p.preco.toFixed(2)}</p>
                     <p className="produto-preco produto-preco--desconto">
@@ -119,6 +129,16 @@ export default function Catalogo() {
                   </>
                 ) : (
                   <p className="produto-preco">R$ {p.preco.toFixed(2)}</p>
+                )}
+                {p.campanhaAtiva?.tipo === "CASHBACK" && (
+                  <p className="produto-campanha-nome produto-campanha-nome--cashback">
+                    Ganhe R$ {(p.preco * p.campanhaAtiva.valor / 100).toFixed(2)} de volta na carteira
+                  </p>
+                )}
+                {p.campanhaAtiva?.tipo === "BRINDE" && p.campanhaAtiva.brindeProduto && (
+                  <p className="produto-campanha-nome produto-campanha-nome--brinde">
+                    Ganhe: {p.campanhaAtiva.brindeProduto.nome}
+                  </p>
                 )}
                 {p.mediaAvaliacao && (
                   <p className="produto-avaliacao">⭐ {p.mediaAvaliacao.toFixed(1)}</p>

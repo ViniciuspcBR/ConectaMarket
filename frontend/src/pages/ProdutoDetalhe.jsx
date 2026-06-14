@@ -67,7 +67,7 @@ export default function ProdutoDetalhe() {
             </p>
           )}
 
-          {produto.campanhaAtiva && produto.precoComDesconto ? (
+          {produto.campanhaAtiva?.tipo === "DESCONTO" && produto.precoComDesconto ? (
             <div className="detalhe-preco-bloco">
               <p className="detalhe-preco-original">R$ {produto.preco.toFixed(2)}</p>
               <p className="detalhe-preco detalhe-preco--desconto">
@@ -75,12 +75,28 @@ export default function ProdutoDetalhe() {
                 <span className="detalhe-desconto-badge">-{produto.campanhaAtiva.valor}%</span>
               </p>
               <p className="detalhe-campanha-info">
-                🎯 Campanha: <strong>{produto.campanhaAtiva.nome}</strong> ({produto.campanhaAtiva.tipo === "CASHBACK" ? "Cashback" : "Desconto"} de {produto.campanhaAtiva.valor}%)
+                🎯 Campanha: <strong>{produto.campanhaAtiva.nome}</strong> (Desconto de {produto.campanhaAtiva.valor}%)
               </p>
             </div>
           ) : (
             <p className="detalhe-preco">R$ {produto.preco.toFixed(2)}</p>
           )}
+
+          {produto.campanhaAtiva?.tipo === "CASHBACK" && (
+            <div className="detalhe-campanha-box detalhe-campanha-box--cashback">
+              💰 Campanha <strong>{produto.campanhaAtiva.nome}</strong>: ao comprar este produto e receber o pedido,
+              você recebe <strong>R$ {(produto.preco * produto.campanhaAtiva.valor / 100).toFixed(2)}</strong> de cashback
+              ({produto.campanhaAtiva.valor}%) na sua Carteira.
+            </div>
+          )}
+
+          {produto.campanhaAtiva?.tipo === "BRINDE" && produto.campanhaAtiva.brindeProduto && (
+            <div className="detalhe-campanha-box detalhe-campanha-box--brinde">
+              🎁 Campanha <strong>{produto.campanhaAtiva.nome}</strong>: ao receber este pedido,
+              você ganha de brinde <strong>{produto.campanhaAtiva.brindeProduto.nome}</strong>.
+            </div>
+          )}
+
           {produto.descricao && <p className="detalhe-desc">{produto.descricao}</p>}
 
           <p className="detalhe-estoque">

@@ -11,6 +11,8 @@ const fornecedorRoutes = require("./routes/fornecedor.routes");
 const campanhaRoutes   = require("./routes/campanha.routes");
 const avaliacaoRoutes  = require("./routes/avaliacao.routes");
 const adminRoutes      = require("./routes/admin.routes");
+const carteiraRoutes   = require("./routes/carteira.routes");
+const brindeRoutes     = require("./routes/brinde.routes");
 const errorMiddleware  = require("./middlewares/error.middleware");
 
 const app = express();
@@ -27,6 +29,8 @@ app.use("/api/fornecedores",fornecedorRoutes);
 app.use("/api/campanhas",   campanhaRoutes);
 app.use("/api/avaliacoes",  avaliacaoRoutes);
 app.use("/api/admin",       adminRoutes);
+app.use("/api/carteira",    carteiraRoutes);
+app.use("/api/brindes",     brindeRoutes);
 
 app.get("/", (req, res) => res.json({ status: "ConectaMarket API 🚀" }));
 

@@ -41,7 +41,7 @@ async function listar(req, res, next) {
           where: {
             campanha: { ativa: true, inicio: { lte: agora }, fim: { gte: agora } },
           },
-          include: { campanha: true },
+          include: { campanha: { include: { brindeProduto: true } } },
         },
       },
       orderBy: { criadoEm: "desc" },
@@ -50,7 +50,7 @@ async function listar(req, res, next) {
     const resultado = produtos.map((p) => {
       const campanhaAtiva = p.campanhas?.[0]?.campanha || null;
       let precoComDesconto = null;
-      if (campanhaAtiva && (campanhaAtiva.tipo === "DESCONTO" || campanhaAtiva.tipo === "CASHBACK")) {
+      if (campanhaAtiva && campanhaAtiva.tipo === "DESCONTO") {
         precoComDesconto = p.preco * (1 - campanhaAtiva.valor / 100);
       }
       return {
@@ -64,6 +64,9 @@ async function listar(req, res, next) {
           nome: campanhaAtiva.nome,
           tipo: campanhaAtiva.tipo,
           valor: campanhaAtiva.valor,
+          brindeProduto: campanhaAtiva.brindeProduto
+            ? { id: campanhaAtiva.brindeProduto.id, nome: campanhaAtiva.brindeProduto.nome, imagem: campanhaAtiva.brindeProduto.imagem }
+            : null,
         } : null,
         precoComDesconto,
       };
@@ -81,7 +84,7 @@ async function buscarPorId(req, res, next) {
       include: {
         loja: true, fornecedor: true, empreendedor: true,
         avaliacoes: { include: { usuario: { select: { nome: true } } } },
-        campanhas:  { include: { campanha: true } },
+        campanhas:  { include: { campanha: { include: { brindeProduto: true } } } },
       },
     });
     if (!produto) return res.status(404).json({ erro: "Produto não encontrado." });
@@ -92,7 +95,7 @@ async function buscarPorId(req, res, next) {
       ?.find((c) => c.ativa && new Date(c.inicio) <= agora && new Date(c.fim) >= agora) || null;
 
     let precoComDesconto = null;
-    if (campanhaAtiva && (campanhaAtiva.tipo === "DESCONTO" || campanhaAtiva.tipo === "CASHBACK")) {
+    if (campanhaAtiva && campanhaAtiva.tipo === "DESCONTO") {
       precoComDesconto = produto.preco * (1 - campanhaAtiva.valor / 100);
     }
 
@@ -101,6 +104,9 @@ async function buscarPorId(req, res, next) {
       campanhaAtiva: campanhaAtiva ? {
         id: campanhaAtiva.id, nome: campanhaAtiva.nome,
         tipo: campanhaAtiva.tipo, valor: campanhaAtiva.valor,
+        brindeProduto: campanhaAtiva.brindeProduto
+          ? { id: campanhaAtiva.brindeProduto.id, nome: campanhaAtiva.brindeProduto.nome, imagem: campanhaAtiva.brindeProduto.imagem }
+          : null,
       } : null,
       precoComDesconto,
     });

@@ -6,6 +6,15 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("🌱 Iniciando seed...");
 
+  // ── Guarda contra duplicação ────────────────────────────────────
+  // Se já existem produtos cadastrados, o banco já foi populado
+  // (isso evita duplicar o catálogo a cada `docker-compose up`)
+  const totalProdutos = await prisma.produto.count();
+  if (totalProdutos > 0) {
+    console.log(`ℹ️  Banco já populado (${totalProdutos} produtos encontrados). Seed ignorado.`);
+    return;
+  }
+
   // ── Usuários ──────────────────────────────────────────────────
   const senhaHash = await bcrypt.hash("senha123", 10);
 
@@ -232,19 +241,55 @@ async function main() {
     await prisma.produto.create({ data: { ...p, tipo: "PRODUTO", fornecedorId: fornecedor.id } }).catch(() => {});
   }
 
-  // ── Campanha promocional ───────────────────────────────────────
-  const todosProdutos = await prisma.produto.findMany({ take: 5 });
+  // ── Campanhas promocionais de exemplo ────────────────────────────
+
+  // 1) DESCONTO — alguns produtos em destaque
+  const produtosDestaque = await prisma.produto.findMany({ take: 5 });
   await prisma.campanha.create({
     data: {
-      nome: "Promoção de Lançamento ABADEUS",
+      nome: "Promoção de Lançamento ConectaMarket",
       descricao: "10% de desconto em produtos selecionados do marketplace",
       tipo: "DESCONTO",
       valor: 10,
       inicio: new Date(),
       fim: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      produtos: { create: todosProdutos.map((p) => ({ produtoId: p.id })) },
+      produtos: { create: produtosDestaque.map((p) => ({ produtoId: p.id })) },
     },
   }).catch(() => {});
+
+  // 2) CASHBACK — produtos da categoria Agropecuária
+  const produtosAgroCampanha = await prisma.produto.findMany({ where: { categoria: "Agropecuária" } });
+  if (produtosAgroCampanha.length > 0) {
+    await prisma.campanha.create({
+      data: {
+        nome: "Cashback Agro",
+        descricao: "Compre produtos agropecuários e receba 10% de volta na sua carteira",
+        tipo: "CASHBACK",
+        valor: 10,
+        inicio: new Date(),
+        fim: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        produtos: { create: produtosAgroCampanha.map((p) => ({ produtoId: p.id })) },
+      },
+    }).catch(() => {});
+  }
+
+  // 3) BRINDE — serviços de Cultura ganham um brinde (ex: palheta junto com aula de música)
+  const aulaViolao = await prisma.produto.findFirst({ where: { nome: "Aula de Violão (mensal)" } });
+  const servicosCulturaCampanha = await prisma.produto.findMany({ where: { categoria: "Cultura", tipo: "SERVICO" } });
+  if (aulaViolao && servicosCulturaCampanha.length > 0) {
+    await prisma.campanha.create({
+      data: {
+        nome: "Brinde Cultura",
+        descricao: "Contrate serviços de Cultura e ganhe uma aula extra de brinde",
+        tipo: "BRINDE",
+        valor: 0,
+        inicio: new Date(),
+        fim: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        brindeProdutoId: aulaViolao.id,
+        produtos: { create: servicosCulturaCampanha.map((p) => ({ produtoId: p.id })) },
+      },
+    }).catch(() => {});
+  }
 
   console.log("✅ Seed concluído!");
   console.log("📧 Usuários criados:");

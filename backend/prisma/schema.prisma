@@ -51,6 +51,8 @@ model Usuario {
   empreendedor Empreendedor?
   pedidos      Pedido[]
   avaliacoes   Avaliacao[]
+  carteira     Carteira?
+  brindes      BrindeRecebido[]
 
   @@map("usuarios")
 }
@@ -130,6 +132,8 @@ model Produto {
   itensPedido ItemPedido[]
   campanhas   CampanhaProduto[]
   avaliacoes  Avaliacao[]
+  campanhasComoBrinde Campanha[] @relation("CampanhaBrindeProduto")
+  brindesRecebidos    BrindeRecebido[]
 
   @@map("produtos")
 }
@@ -182,7 +186,12 @@ model Campanha {
   fim       DateTime
   criadoEm DateTime @default(now())
 
+  // Usado apenas quando tipo = "BRINDE": produto que será dado de brinde
+  brindeProdutoId Int?
+  brindeProduto   Produto? @relation("CampanhaBrindeProduto", fields: [brindeProdutoId], references: [id])
+
   produtos CampanhaProduto[]
+  brindes  BrindeRecebido[]
 
   @@map("campanhas")
 }
@@ -210,4 +219,60 @@ model Avaliacao {
   produto   Produto @relation(fields: [produtoId], references: [id])
 
   @@map("avaliacoes")
+}
+
+// ─────────────────────────────────────────────
+// CARTEIRA — saldo de cashback acumulado (pontos em R$)
+// ─────────────────────────────────────────────
+model Carteira {
+  id        Int      @id @default(autoincrement())
+  saldo     Float    @default(0)
+  criadoEm DateTime @default(now())
+
+  usuarioId Int     @unique
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+
+  transacoes CarteiraTransacao[]
+
+  @@map("carteiras")
+}
+
+// ─────────────────────────────────────────────
+// TRANSAÇÃO DA CARTEIRA — histórico de cashback recebido/usado
+// ─────────────────────────────────────────────
+model CarteiraTransacao {
+  id         Int      @id @default(autoincrement())
+  tipo       String   // "CASHBACK" (crédito) ou "USO" (débito)
+  valor      Float
+  descricao  String?
+  criadoEm  DateTime @default(now())
+
+  carteiraId Int
+  carteira   Carteira @relation(fields: [carteiraId], references: [id])
+
+  pedidoId Int?
+
+  @@map("carteira_transacoes")
+}
+
+// ─────────────────────────────────────────────
+// BRINDE RECEBIDO — registro de brindes ganhos em campanhas
+// ─────────────────────────────────────────────
+model BrindeRecebido {
+  id        Int      @id @default(autoincrement())
+  status    String   @default("PENDENTE") // PENDENTE | ENTREGUE
+  criadoEm DateTime @default(now())
+
+  usuarioId Int
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+
+  produtoId Int
+  produto   Produto @relation(fields: [produtoId], references: [id])
+
+  campanhaId Int
+  campanha   Campanha @relation(fields: [campanhaId], references: [id])
+
+  pedidoId Int
+
+  @@map("brindes_recebidos")
 }

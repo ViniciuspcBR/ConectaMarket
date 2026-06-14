@@ -76,10 +76,12 @@ async function criar(req, res, next) {
       const produto = produtos.find((p) => p.id === item.produtoId);
       if (!produto) throw { status: 400, message: `Produto ${item.produtoId} não encontrado.` };
 
-      // Aplica desconto da campanha ativa, se houver (DESCONTO ou CASHBACK)
+      // Apenas campanhas do tipo DESCONTO reduzem o preço pago.
+      // CASHBACK não altera o valor cobrado — gera pontos depois da entrega.
+      // BRINDE não altera o valor cobrado — gera um brinde depois da entrega.
       let precoFinal = produto.preco;
       const campanha = produto.campanhas?.[0]?.campanha;
-      if (campanha && (campanha.tipo === "DESCONTO" || campanha.tipo === "CASHBACK")) {
+      if (campanha && campanha.tipo === "DESCONTO") {
         precoFinal = produto.preco * (1 - campanha.valor / 100);
       }
 
@@ -151,6 +153,67 @@ async function atualizarStatus(req, res, next) {
       }
     }
     // Se ambos são do mesmo grupo (ambos descontados ou ambos não), não mexe no estoque
+
+    // ── Cashback e Brindes — processados na entrega ──────────────
+    // Só processa na transição PARA "ENTREGUE" (evita duplicar se marcado 2x)
+    if (status === "ENTREGUE" && pedido.status !== "ENTREGUE") {
+      for (const item of pedido.itens) {
+        // Busca campanhas vinculadas a este produto
+        const vinculos = await prisma.campanhaProduto.findMany({
+          where: { produtoId: item.produtoId, campanha: { ativa: true } },
+          include: { campanha: true },
+        });
+
+        for (const v of vinculos) {
+          const campanha = v.campanha;
+
+          // ── CASHBACK: credita pontos (em R$) na carteira do cliente ──
+          if (campanha.tipo === "CASHBACK") {
+            const valorCashback = item.subtotal * (campanha.valor / 100);
+
+            const carteira = await prisma.carteira.upsert({
+              where:  { usuarioId: pedido.clienteId },
+              update: {},
+              create: { usuarioId: pedido.clienteId, saldo: 0 },
+            });
+
+            await prisma.carteira.update({
+              where: { id: carteira.id },
+              data:  { saldo: carteira.saldo + valorCashback },
+            });
+
+            await prisma.carteiraTransacao.create({
+              data: {
+                carteiraId: carteira.id,
+                tipo:       "CASHBACK",
+                valor:      valorCashback,
+                descricao:  `Cashback (${campanha.valor}%) — Pedido #${pedido.id} — ${campanha.nome}`,
+                pedidoId:   pedido.id,
+              },
+            });
+          }
+
+          // ── BRINDE: registra um brinde a ser entregue ao cliente ──
+          if (campanha.tipo === "BRINDE" && campanha.brindeProdutoId) {
+            // Evita duplicar caso o status seja alterado novamente
+            const jaExiste = await prisma.brindeRecebido.findFirst({
+              where: { pedidoId: pedido.id, campanhaId: campanha.id, usuarioId: pedido.clienteId },
+            });
+            if (!jaExiste) {
+              await prisma.brindeRecebido.create({
+                data: {
+                  usuarioId:  pedido.clienteId,
+                  produtoId:  campanha.brindeProdutoId,
+                  campanhaId: campanha.id,
+                  pedidoId:   pedido.id,
+                  status:     "PENDENTE",
+                },
+              });
+            }
+          }
+        }
+      }
+    }
 
     const atualizado = await prisma.pedido.update({
       where: { id: pedidoId },

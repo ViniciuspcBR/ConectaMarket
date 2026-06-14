@@ -55,3 +55,21 @@
   color: #16a34a;
   margin-top: 4px;
 }
+
+.detalhe-campanha-box {
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.detalhe-campanha-box--cashback {
+  background: #f0fdf4;
+  color: #166534;
+  border-left: 3px solid #16a34a;
+}
+.detalhe-campanha-box--brinde {
+  background: #f5f3ff;
+  color: #5b21b6;
+  border-left: 3px solid #7c3aed;
+}

@@ -63,4 +63,13 @@ export const usuarioService = {
   atualizarPerfil: (d) => api.put("/usuarios/perfil", d),
 };
 
+export const carteiraService = {
+  minha: () => api.get("/carteira"),
+};
+
+export const brindeService = {
+  meus:            ()     => api.get("/brindes"),
+  marcarEntregue:  (id)   => api.patch(`/brindes/${id}/entregar`),
+};
+
 export default api;

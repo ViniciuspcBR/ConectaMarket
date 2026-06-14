@@ -69,6 +69,9 @@ https://www.figma.com/proto/Pfo7ekOG6CAXZX4vrO0G1M/Sem-t%C3%ADtulo?node-id=1-9&p
 * Carrinho de compras
 * Checkout
 * Histórico de pedidos
+* Campanhas de desconto, cashback e brinde
+* Carteira digital (saldo e histórico de cashback)
+* Brindes recebidos
 
 ### Gestão
 
@@ -154,7 +157,7 @@ docker-compose up --build
 Em outro terminal:
 
 ```bash
-docker exec -it marketplace_backend npx prisma migrate dev --name v7_fixes
+docker exec -it marketplace_backend npx prisma migrate dev --name v8_carteira_brindes
 ```
 
 ### 4. Popular o banco
@@ -231,6 +234,9 @@ Principais entidades:
 * ItemPedido
 * Campanha
 * Avaliação
+* Carteira (saldo de cashback)
+* CarteiraTransacao (histórico de cashback)
+* BrindeRecebido (brindes ganhos em campanhas)
 
 ---
 

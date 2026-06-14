@@ -1,0 +1,76 @@
+/* src/pages/Perfil.css */
+.perfil-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+.carteira-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.carteira-saldo {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #16a34a;
+  margin-bottom: 4px;
+}
+
+.carteira-historico {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 12px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.carteira-transacao {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.carteira-transacao:last-child { border-bottom: none; }
+
+.carteira-transacao-desc { font-size: 0.85rem; color: #1e293b; font-weight: 500; }
+.carteira-transacao-data { font-size: 0.75rem; color: #94a3b8; margin-top: 2px; }
+
+.carteira-valor { font-weight: 700; font-size: 0.9rem; white-space: nowrap; }
+.carteira-valor--positivo { color: #16a34a; }
+.carteira-valor--negativo { color: #dc2626; }
+
+/* Brindes */
+.brindes-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.brinde-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.brinde-img {
+  width: 48px; height: 48px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #e2e8f0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+.brinde-img img { width: 100%; height: 100%; object-fit: cover; }
+
+.brinde-nome { font-weight: 700; font-size: 0.88rem; color: #1e293b; }
+.brinde-campanha { font-size: 0.76rem; color: #94a3b8; margin-top: 2px; }
