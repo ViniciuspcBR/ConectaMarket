@@ -1,14 +1,23 @@
 // src/controllers/pedido.controller.js
 const prisma = require("../config/prisma");
 
+// Helper — filtra pedidos por perfil de vendedor
+async function filtroPorPerfil(usuarioId, role) {
+  if (role === "ADMINISTRADOR") return { excluido: false };
+  if (role === "LOJISTA") {
+    const loja = await prisma.loja.findUnique({ where: { usuarioId } });
+    return loja ? { lojaId: loja.id, excluido: false } : { id: -1 };
+  }
+  return { clienteId: usuarioId, excluido: false };
+}
+
 // GET /api/pedidos
 async function listar(req, res, next) {
   try {
     const { role, id: usuarioId } = req.usuario;
+    const where = await filtroPorPerfil(usuarioId, role);
     const pedidos = await prisma.pedido.findMany({
-      where: role === "ADMINISTRADOR"
-        ? { excluido: false }
-        : { clienteId: usuarioId, excluido: false },
+      where,
       include: {
         itens:   { include: { produto: { select: { nome: true, imagem: true, preco: true } } } },
         cliente: { select: { nome: true, email: true } },
@@ -20,7 +29,7 @@ async function listar(req, res, next) {
   } catch (err) { next(err); }
 }
 
-// GET /api/pedidos/excluidos — histórico de excluídos (só admin/vendedor)
+// GET /api/pedidos/excluidos
 async function listarExcluidos(req, res, next) {
   try {
     const { role, id: usuarioId } = req.usuario;
@@ -58,7 +67,7 @@ async function buscarPorId(req, res, next) {
 async function criar(req, res, next) {
   try {
     const clienteId = req.usuario.id;
-    const { lojaId, observacao, itens, formaPagamento, enderecoEntrega } = req.body;
+    const { lojaId, observacao, itens, formaPagamento, enderecoEntrega, usarCashback } = req.body;
 
     const ids = itens.map((i) => i.produtoId);
     const agora = new Date();
@@ -76,9 +85,6 @@ async function criar(req, res, next) {
       const produto = produtos.find((p) => p.id === item.produtoId);
       if (!produto) throw { status: 400, message: `Produto ${item.produtoId} não encontrado.` };
 
-      // Apenas campanhas do tipo DESCONTO reduzem o preço pago.
-      // CASHBACK não altera o valor cobrado — gera pontos depois da entrega.
-      // BRINDE não altera o valor cobrado — gera um brinde depois da entrega.
       let precoFinal = produto.preco;
       const campanha = produto.campanhas?.[0]?.campanha;
       if (campanha && campanha.tipo === "DESCONTO") {
@@ -93,11 +99,24 @@ async function criar(req, res, next) {
       };
     });
 
-    const total = itensMontados.reduce((acc, i) => acc + i.subtotal, 0);
+    const subtotalItens = itensMontados.reduce((acc, i) => acc + i.subtotal, 0);
+
+    // ── Uso de cashback da carteira ──────────────────────────────
+    let valorUsoCashback = 0;
+    if (usarCashback && usarCashback > 0) {
+      const carteira = await prisma.carteira.findUnique({ where: { usuarioId: clienteId } });
+      if (carteira && carteira.saldo > 0) {
+        // Usa no máximo o saldo disponível e no máximo o subtotal dos itens
+        valorUsoCashback = Math.min(carteira.saldo, subtotalItens, usarCashback);
+      }
+    }
+
+    const total = Math.max(0, subtotalItens - valorUsoCashback);
 
     const pedido = await prisma.pedido.create({
       data: {
         clienteId, lojaId, observacao, total,
+        usoCashback:     valorUsoCashback,
         formaPagamento:  formaPagamento  || "PIX",
         enderecoEntrega: enderecoEntrega || null,
         itens: { create: itensMontados },
@@ -105,8 +124,59 @@ async function criar(req, res, next) {
       include: { itens: true },
     });
 
-    res.status(201).json(pedido);
+    // Debita o cashback usado da carteira
+    if (valorUsoCashback > 0) {
+      const carteira = await prisma.carteira.findUnique({ where: { usuarioId: clienteId } });
+      await prisma.carteira.update({
+        where: { id: carteira.id },
+        data:  { saldo: carteira.saldo - valorUsoCashback },
+      });
+      await prisma.carteiraTransacao.create({
+        data: {
+          carteiraId: carteira.id,
+          tipo:       "USO",
+          valor:      valorUsoCashback,
+          descricao:  `Cashback usado no Pedido #${pedido.id}`,
+          pedidoId:   pedido.id,
+        },
+      });
+    }
+
+    res.status(201).json({ ...pedido, usoCashback: valorUsoCashback });
   } catch (err) { next(err); }
+}
+
+// Função auxiliar — estorna cashback e brindes de um pedido
+async function estornarBeneficiosPedido(pedido) {
+  // Estornar cashback creditado quando foi marcado ENTREGUE
+  const transacoesCashback = await prisma.carteiraTransacao.findMany({
+    where: { pedidoId: pedido.id, tipo: "CASHBACK" },
+  });
+
+  for (const t of transacoesCashback) {
+    const carteira = await prisma.carteira.findUnique({ where: { id: t.carteiraId } });
+    if (!carteira) continue;
+    const novoSaldo = Math.max(0, carteira.saldo - t.valor);
+    await prisma.carteira.update({
+      where: { id: carteira.id },
+      data:  { saldo: novoSaldo },
+    });
+    await prisma.carteiraTransacao.create({
+      data: {
+        carteiraId: carteira.id,
+        tipo:       "ESTORNO",
+        valor:      t.valor,
+        descricao:  `Estorno de cashback — Pedido #${pedido.id} cancelado/devolvido`,
+        pedidoId:   pedido.id,
+      },
+    });
+  }
+
+  // Cancelar todos os brindes vinculados ao pedido
+  await prisma.brindeRecebido.updateMany({
+    where: { pedidoId: pedido.id },
+    data:  { status: "CANCELADO" },
+  });
 }
 
 // PATCH /api/pedidos/:id/status
@@ -115,7 +185,7 @@ async function atualizarStatus(req, res, next) {
     const { status } = req.body;
     const pedidoId   = Number(req.params.id);
 
-    const statusValidos = ["PENDENTE","CONFIRMADO","EM_PREPARO","ENVIADO","ENTREGUE","CANCELADO"];
+    const statusValidos = ["PENDENTE","CONFIRMADO","EM_PREPARO","ENVIADO","ENTREGUE","CANCELADO","DEVOLVIDO"];
     if (!statusValidos.includes(status))
       return res.status(400).json({ erro: "Status inválido." });
 
@@ -126,13 +196,11 @@ async function atualizarStatus(req, res, next) {
     if (!pedido) return res.status(404).json({ erro: "Pedido não encontrado." });
 
     // ── Lógica de estoque ────────────────────────────────────────
-    // Statuses que significam "estoque já foi descontado"
     const statusDescontado = ["CONFIRMADO","EM_PREPARO","ENVIADO","ENTREGUE"];
     const eraDescontado    = statusDescontado.includes(pedido.status);
     const seraDescontado   = statusDescontado.includes(status);
 
     if (!eraDescontado && seraDescontado) {
-      // Estava sem desconto → vai descontar
       for (const item of pedido.itens) {
         const p = await prisma.produto.findUnique({ where: { id: item.produtoId } });
         if (!p) continue;
@@ -142,7 +210,6 @@ async function atualizarStatus(req, res, next) {
         });
       }
     } else if (eraDescontado && !seraDescontado) {
-      // Estava descontado → vai devolver (CANCELADO ou PENDENTE de volta)
       for (const item of pedido.itens) {
         const p = await prisma.produto.findUnique({ where: { id: item.produtoId } });
         if (!p) continue;
@@ -152,13 +219,10 @@ async function atualizarStatus(req, res, next) {
         });
       }
     }
-    // Se ambos são do mesmo grupo (ambos descontados ou ambos não), não mexe no estoque
 
     // ── Cashback e Brindes — processados na entrega ──────────────
-    // Só processa na transição PARA "ENTREGUE" (evita duplicar se marcado 2x)
     if (status === "ENTREGUE" && pedido.status !== "ENTREGUE") {
       for (const item of pedido.itens) {
-        // Busca campanhas vinculadas a este produto
         const vinculos = await prisma.campanhaProduto.findMany({
           where: { produtoId: item.produtoId, campanha: { ativa: true } },
           include: { campanha: true },
@@ -167,21 +231,17 @@ async function atualizarStatus(req, res, next) {
         for (const v of vinculos) {
           const campanha = v.campanha;
 
-          // ── CASHBACK: credita pontos (em R$) na carteira do cliente ──
           if (campanha.tipo === "CASHBACK") {
             const valorCashback = item.subtotal * (campanha.valor / 100);
-
             const carteira = await prisma.carteira.upsert({
               where:  { usuarioId: pedido.clienteId },
               update: {},
               create: { usuarioId: pedido.clienteId, saldo: 0 },
             });
-
             await prisma.carteira.update({
               where: { id: carteira.id },
               data:  { saldo: carteira.saldo + valorCashback },
             });
-
             await prisma.carteiraTransacao.create({
               data: {
                 carteiraId: carteira.id,
@@ -193,9 +253,7 @@ async function atualizarStatus(req, res, next) {
             });
           }
 
-          // ── BRINDE: registra um brinde a ser entregue ao cliente ──
           if (campanha.tipo === "BRINDE" && campanha.brindeProdutoId) {
-            // Evita duplicar caso o status seja alterado novamente
             const jaExiste = await prisma.brindeRecebido.findFirst({
               where: { pedidoId: pedido.id, campanhaId: campanha.id, usuarioId: pedido.clienteId },
             });
@@ -206,13 +264,23 @@ async function atualizarStatus(req, res, next) {
                   produtoId:  campanha.brindeProdutoId,
                   campanhaId: campanha.id,
                   pedidoId:   pedido.id,
-                  status:     "PENDENTE",
+                  status:     "ENTREGUE",
                 },
+              });
+            } else if (jaExiste.status === "PENDENTE") {
+              await prisma.brindeRecebido.update({
+                where: { id: jaExiste.id },
+                data:  { status: "ENTREGUE" },
               });
             }
           }
         }
       }
+    }
+
+    // ── Estorno — quando pedido é CANCELADO ou DEVOLVIDO após ter sido ENTREGUE ──
+    if ((status === "CANCELADO" || status === "DEVOLVIDO") && pedido.status === "ENTREGUE") {
+      await estornarBeneficiosPedido(pedido);
     }
 
     const atualizado = await prisma.pedido.update({
@@ -224,7 +292,7 @@ async function atualizarStatus(req, res, next) {
   } catch (err) { next(err); }
 }
 
-// DELETE /api/pedidos/:id — soft delete + devolve estoque se necessário
+// DELETE /api/pedidos/:id — soft delete
 async function excluir(req, res, next) {
   try {
     const pedidoId          = Number(req.params.id);
@@ -239,15 +307,9 @@ async function excluir(req, res, next) {
     if (role !== "ADMINISTRADOR" && pedido.clienteId !== uid)
       return res.status(403).json({ erro: "Sem permissão para excluir este pedido." });
 
-    if (!["PENDENTE","CANCELADO"].includes(pedido.status))
-      return res.status(400).json({ erro: "Só é possível excluir pedidos pendentes ou cancelados." });
+    if (!["PENDENTE","CANCELADO","DEVOLVIDO"].includes(pedido.status))
+      return res.status(400).json({ erro: "Só é possível excluir pedidos pendentes, cancelados ou devolvidos." });
 
-    // Se estava CONFIRMADO ou EM_PREPARO antes de cancelar e agora excluindo
-    // garantir que o estoque voltou (pedido cancelado já devolveu, pendente nunca descontou)
-    // mas por segurança: se status for CANCELADO e estoque não voltou ainda, devolve
-    // (aqui o pedido cancelado já devolveu, então só precisamos do soft delete)
-
-    // Soft delete — mantém no histórico
     await prisma.pedido.update({
       where: { id: pedidoId },
       data:  { excluido: true },

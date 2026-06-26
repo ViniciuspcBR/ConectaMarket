@@ -63,9 +63,13 @@ export default function Marketplace() {
               <h3>{p.nome}</h3>
               <p>{p.descricao}</p>
               <p className="mk-preco">R$ {Number(p.preco).toFixed(2)}</p>
-              {p.empreendedor && (
+              {(p.empreendedor || p.loja || p.fornecedor) ? (
                 <p style={{fontSize:"0.78rem", color:"#94a3b8", marginTop:4}}>
-                  por {p.empreendedor.nomeNegocio}
+                  por {p.empreendedor?.nomeNegocio || p.loja?.nome || p.fornecedor?.nome}
+                </p>
+              ) : (
+                <p style={{fontSize:"0.78rem", color:"#94a3b8", marginTop:4}}>
+                  por ConectaMarket
                 </p>
               )}
             </div>

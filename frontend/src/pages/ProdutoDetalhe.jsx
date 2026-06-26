@@ -115,7 +115,7 @@ export default function ProdutoDetalhe() {
               <button className="btn-primary" onClick={handleAdicionarCarrinho}>
                 🛒 Adicionar ao Carrinho
               </button>
-              <button className="btn-success" onClick={() => { handleAdicionarCarrinho(); navigate("/carrinho"); }}>
+              <button className="btn-success" onClick={() => { handleAdicionarCarrinho(); navigate("/checkout"); }}>
                 ⚡ Comprar Agora
               </button>
             </div>

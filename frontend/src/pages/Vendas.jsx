@@ -8,8 +8,8 @@ import "./Vendas.css";
 export default function Vendas() {
   const navigate     = useNavigate();
   const { addToast } = useToast();
-  const [pedidos,  setPedidos]  = useState([]);
-  const [produtos, setProdutos] = useState([]);
+  const [pedidos,     setPedidos]     = useState([]);
+  const [produtos,    setProdutos]    = useState([]);
   const [confirmarId, setConfirmarId] = useState(null);
 
   async function carregar() {
@@ -30,10 +30,24 @@ export default function Vendas() {
     }
   }
 
-  const totalVendas    = pedidos.filter((p) => p.status === "ENTREGUE").reduce((a, p) => a + p.total, 0);
-  const pendentes      = pedidos.filter((p) => p.status === "PENDENTE").length;
-  const entregues      = pedidos.filter((p) => p.status === "ENTREGUE").length;
-  const semEstoque     = produtos.filter((p) => p.estoque === 0).length;
+  const totalVendas = pedidos.filter((p) => p.status === "ENTREGUE").reduce((a, p) => a + p.total, 0);
+  const pendentes   = pedidos.filter((p) => p.status === "PENDENTE").length;
+  const entregues   = pedidos.filter((p) => p.status === "ENTREGUE").length;
+  const semEstoque  = produtos.filter((p) => p.estoque === 0).length;
+
+  // Calcula qtd vendida e receita por produto (apenas pedidos ENTREGUE)
+  const statsPorProduto = {};
+  pedidos
+    .filter((p) => p.status === "ENTREGUE")
+    .forEach((pedido) => {
+      (pedido.itens || []).forEach((item) => {
+        if (!statsPorProduto[item.produtoId]) {
+          statsPorProduto[item.produtoId] = { qtd: 0, receita: 0 };
+        }
+        statsPorProduto[item.produtoId].qtd     += item.quantidade;
+        statsPorProduto[item.produtoId].receita += item.subtotal;
+      });
+    });
 
   return (
     <div>
@@ -78,40 +92,62 @@ export default function Vendas() {
         ) : (
           <table className="dash-table">
             <thead>
-              <tr><th>Nome</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th>Tipo</th><th>Ações</th></tr>
+              <tr>
+                <th>Nome</th>
+                <th>Categoria</th>
+                <th>Preço</th>
+                <th>Estoque</th>
+                <th>Tipo</th>
+                <th>Qtd. Vendida</th>
+                <th>Receita Gerada</th>
+                <th>Ações</th>
+              </tr>
             </thead>
             <tbody>
-              {produtos.map((p) => (
-                <tr key={p.id}>
-                  <td>{p.nome}</td>
-                  <td>{p.categoria || "—"}</td>
-                  <td>R$ {p.preco.toFixed(2)}</td>
-                  <td>
-                    <span style={{ color: p.estoque === 0 ? "#dc2626" : p.estoque < 5 ? "#ea580c" : "#16a34a", fontWeight:700 }}>
-                      {p.estoque === 0 ? "⚠️ Sem estoque" : p.estoque}
-                    </span>
-                  </td>
-                  <td>{p.tipo}</td>
-                  <td>
-                    <div style={{ display:"flex", gap:8 }}>
-                      <button className="btn-outline btn-sm"
-                        onClick={() => navigate(`/produtos/${p.id}/editar`)}>
-                        ✏️ Editar
-                      </button>
-                      {confirmarId === p.id ? (
-                        <>
-                          <button className="btn-danger btn-sm" onClick={() => handleRemoverProduto(p.id)}>Confirmar</button>
-                          <button className="btn-outline btn-sm" onClick={() => setConfirmarId(null)}>Cancelar</button>
-                        </>
-                      ) : (
-                        <button className="btn-danger btn-sm" onClick={() => setConfirmarId(p.id)}>
-                          🗑️
+              {produtos.map((p) => {
+                const stats = statsPorProduto[p.id] || { qtd: 0, receita: 0 };
+                return (
+                  <tr key={p.id}>
+                    <td>{p.nome}</td>
+                    <td>{p.categoria || "—"}</td>
+                    <td>R$ {p.preco.toFixed(2)}</td>
+                    <td>
+                      <span style={{ color: p.estoque === 0 ? "#dc2626" : p.estoque < 5 ? "#ea580c" : "#16a34a", fontWeight:700 }}>
+                        {p.estoque === 0 ? "⚠️ Sem estoque" : p.estoque}
+                      </span>
+                    </td>
+                    <td>{p.tipo}</td>
+                    <td>
+                      <span style={{ fontWeight: stats.qtd > 0 ? 700 : 400, color: stats.qtd > 0 ? "#1d4ed8" : "#94a3b8" }}>
+                        {stats.qtd > 0 ? `${stats.qtd} un.` : "—"}
+                      </span>
+                    </td>
+                    <td>
+                      <span style={{ fontWeight: stats.receita > 0 ? 700 : 400, color: stats.receita > 0 ? "#16a34a" : "#94a3b8" }}>
+                        {stats.receita > 0 ? `R$ ${stats.receita.toFixed(2)}` : "—"}
+                      </span>
+                    </td>
+                    <td>
+                      <div style={{ display:"flex", gap:8 }}>
+                        <button className="btn-outline btn-sm"
+                          onClick={() => navigate(`/produtos/${p.id}/editar`)}>
+                          ✏️ Editar
                         </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                        {confirmarId === p.id ? (
+                          <>
+                            <button className="btn-danger btn-sm" onClick={() => handleRemoverProduto(p.id)}>Confirmar</button>
+                            <button className="btn-outline btn-sm" onClick={() => setConfirmarId(null)}>Cancelar</button>
+                          </>
+                        ) : (
+                          <button className="btn-danger btn-sm" onClick={() => setConfirmarId(p.id)}>
+                            🗑️
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}

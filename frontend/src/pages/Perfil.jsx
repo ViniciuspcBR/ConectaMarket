@@ -7,8 +7,9 @@ import "./Auth.css";
 import "./Perfil.css";
 
 const STATUS_BRINDE_LABEL = {
-  PENDENTE: "Aguardando entrega",
-  ENTREGUE: "Entregue",
+  PENDENTE:  "Aguardando entrega",
+  ENTREGUE:  "Entregue ✓",
+  CANCELADO: "Cancelado",
 };
 
 export default function Perfil() {
@@ -137,8 +138,8 @@ export default function Perfil() {
                     <p className="brinde-nome">{b.produto?.nome}</p>
                     <p className="brinde-campanha">Campanha: {b.campanha?.nome}</p>
                   </div>
-                  <span className={`badge ${b.status === "ENTREGUE" ? "badge-green" : "badge-orange"}`}>
-                    {STATUS_BRINDE_LABEL[b.status]}
+                  <span className={`badge ${b.status === "ENTREGUE" ? "badge-green" : b.status === "CANCELADO" ? "badge-red" : "badge-orange"}`}>
+                    {STATUS_BRINDE_LABEL[b.status] ?? b.status}
                   </span>
                 </div>
               ))}

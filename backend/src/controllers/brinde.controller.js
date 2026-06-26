@@ -7,7 +7,7 @@ async function meusBrindes(req, res, next) {
     const usuarioId = req.usuario.id;
 
     const brindes = await prisma.brindeRecebido.findMany({
-      where: { usuarioId },
+      where: { usuarioId, status: { not: "CANCELADO" } },
       include: {
         produto:  { select: { id: true, nome: true, imagem: true, categoria: true } },
         campanha: { select: { id: true, nome: true } },

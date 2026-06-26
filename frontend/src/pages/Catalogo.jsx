@@ -11,15 +11,20 @@ const CATEGORIAS = [
 
 export default function Catalogo() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const lojaId = searchParams.get("lojaId");
+  const lojaId  = searchParams.get("lojaId");
   const tipoUrl = searchParams.get("tipo");
 
   const [produtos,   setProdutos]   = useState([]);
   const [busca,      setBusca]      = useState("");
   const [categoria,  setCategoria]  = useState("Todas");
-  const [tipo,       setTipo]       = useState(tipoUrl || "");
+  const [tipo,       setTipo]       = useState("");
   const [carregando, setCarregando] = useState(true);
   const [lojaInfo,   setLojaInfo]   = useState(null);
+
+  // Sempre que a URL mudar, sincroniza o tipo
+  useEffect(() => {
+    setTipo(tipoUrl || "");
+  }, [tipoUrl]);
 
   // Carrega info da loja se vier filtro por loja
   useEffect(() => {
@@ -77,7 +82,12 @@ export default function Catalogo() {
         <select value={categoria} onChange={(e) => setCategoria(e.target.value)}>
           {CATEGORIAS.map((c) => <option key={c}>{c}</option>)}
         </select>
-        <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
+        <select value={tipo} disabled={!!lojaId} onChange={(e) => {
+          const novo = new URLSearchParams(searchParams);
+          if (e.target.value) novo.set("tipo", e.target.value);
+          else novo.delete("tipo");
+          setSearchParams(novo);
+        }}>
           <option value="">Todos os tipos</option>
           <option value="PRODUTO">Produto</option>
           <option value="SERVICO">Serviço</option>

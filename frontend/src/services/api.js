@@ -9,6 +9,22 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Logout automático quando o token expirar
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("usuario");
+      // Redireciona para login sem depender do React Router
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const authService = {
   login:    (d) => api.post("/auth/login",    d),
   registro: (d) => api.post("/auth/registro", d),

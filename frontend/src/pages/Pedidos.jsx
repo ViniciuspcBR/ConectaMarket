@@ -5,11 +5,11 @@ import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import "./Pedidos.css";
 
-const STATUS_OPTIONS = ["PENDENTE","CONFIRMADO","EM_PREPARO","ENVIADO","ENTREGUE","CANCELADO"];
+const STATUS_OPTIONS = ["PENDENTE","CONFIRMADO","EM_PREPARO","ENVIADO","ENTREGUE","CANCELADO","DEVOLVIDO"];
 
 function badgeStatus(s) {
   return { PENDENTE:"badge-orange", CONFIRMADO:"badge-blue",
-           ENTREGUE:"badge-green",  CANCELADO:"badge-red",
+           ENTREGUE:"badge-green",  CANCELADO:"badge-red", DEVOLVIDO:"badge-red",
            EM_PREPARO:"badge-blue", ENVIADO:"badge-blue" }[s] || "badge-blue";
 }
 
@@ -186,7 +186,7 @@ export default function Pedidos() {
                 )}
 
                 {/* Excluir — só PENDENTE ou CANCELADO, só pedidos ativos */}
-                {!verExcluidos && ["PENDENTE","CANCELADO"].includes(p.status) && (
+                {!verExcluidos && ["PENDENTE","CANCELADO","DEVOLVIDO"].includes(p.status) && (
                   confirmarId === p.id ? (
                     <div className="confirmar-exclusao">
                       <span>Confirmar?</span>

@@ -126,7 +126,7 @@ async function main() {
   ];
 
   for (const p of produtosBeauty) {
-    await prisma.produto.create({ data: { ...p, tipo: "PRODUTO", empreendedorId: emp1.id } }).catch(() => {});
+    await prisma.produto.create({ data: { ...p, tipo: "PRODUTO", lojaId: loja.id } }).catch(() => {});
   }
 
   // ── Serviços — Saúde e Beleza ─────────────────────────────────
@@ -150,7 +150,7 @@ async function main() {
   ];
 
   for (const p of servicosPizzaria) {
-    await prisma.produto.create({ data: { ...p, tipo: "PRODUTO", empreendedorId: emp2.id } }).catch(() => {});
+    await prisma.produto.create({ data: { ...p, tipo: "PRODUTO", lojaId: loja.id } }).catch(() => {});
   }
 
   // ── Produtos — Vestuário (Fornecedor) ─────────────────────────
@@ -162,7 +162,7 @@ async function main() {
   ];
 
   for (const p of produtosVestuario) {
-    await prisma.produto.create({ data: { ...p, tipo: "PRODUTO", fornecedorId: fornecedor.id } }).catch(() => {});
+    await prisma.produto.create({ data: { ...p, tipo: "PRODUTO", lojaId: loja.id } }).catch(() => {});
   }
 
   // ── Produtos — Construção Civil (Fornecedor) ──────────────────
@@ -173,7 +173,7 @@ async function main() {
   ];
 
   for (const p of produtosConstrucao) {
-    await prisma.produto.create({ data: { ...p, tipo: "PRODUTO", fornecedorId: fornecedor.id } }).catch(() => {});
+    await prisma.produto.create({ data: { ...p, tipo: "PRODUTO", lojaId: loja.id } }).catch(() => {});
   }
 
   // ── Serviços — Construção ─────────────────────────────────────
@@ -188,13 +188,13 @@ async function main() {
 
   // ── Produtos — Eletrônica ─────────────────────────────────────
   const produtosEletronica = [
-    { nome: "Carregador USB-C 65W", descricao: "Carregador rápido compatível com notebooks e celulares", preco: 79.90, estoque: 30, imagem: "https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&h=300&fit=crop", categoria: "Eletrônica" },
+    { nome: "Carregador USB-C 65W", descricao: "Carregador rápido compatível com notebooks e celulares", preco: 79.90, estoque: 30, imagem: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQbhk1x9yxzaxBLou2rlPSrVy3z8frtghAt6OIGEURP0w&s=10", categoria: "Eletrônica" },
     { nome: "Fone de Ouvido Bluetooth", descricao: "Fone sem fio com cancelamento de ruído, 20h bateria", preco: 159.90, estoque: 18, imagem: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop", categoria: "Eletrônica" },
-    { nome: "Cabo HDMI 2m", descricao: "Cabo HDMI 2.0 4K, 2 metros", preco: 24.90, estoque: 45, imagem: "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=400&h=300&fit=crop", categoria: "Eletrônica" },
+    { nome: "Cabo HDMI 2m", descricao: "Cabo HDMI 2.0 4K, 2 metros", preco: 24.90, estoque: 45, imagem: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTPWRowXgso4mMe9VNE5S8hpjMQCHy_U9bYc2glAw_Svg&s=10", categoria: "Eletrônica" },
   ];
 
   for (const p of produtosEletronica) {
-    await prisma.produto.create({ data: { ...p, tipo: "PRODUTO", fornecedorId: fornecedor.id } }).catch(() => {});
+    await prisma.produto.create({ data: { ...p, tipo: "PRODUTO", lojaId: loja.id } }).catch(() => {});
   }
 
   // ── Serviços — Eletrônica ─────────────────────────────────────
@@ -238,7 +238,7 @@ async function main() {
   ];
 
   for (const p of produtosAgro) {
-    await prisma.produto.create({ data: { ...p, tipo: "PRODUTO", fornecedorId: fornecedor.id } }).catch(() => {});
+    await prisma.produto.create({ data: { ...p, tipo: "PRODUTO", lojaId: loja.id } }).catch(() => {});
   }
 
   // ── Campanhas promocionais de exemplo ────────────────────────────
@@ -274,13 +274,13 @@ async function main() {
   }
 
   // 3) BRINDE — serviços de Cultura ganham um brinde (ex: palheta junto com aula de música)
-  const aulaViolao = await prisma.produto.findFirst({ where: { nome: "Aula de Violão (mensal)" } });
+  const aulaViolao = await prisma.produto.findFirst({ where: { nome: "Fone de Ouvido Bluetooth" } });
   const servicosCulturaCampanha = await prisma.produto.findMany({ where: { categoria: "Cultura", tipo: "SERVICO" } });
   if (aulaViolao && servicosCulturaCampanha.length > 0) {
     await prisma.campanha.create({
       data: {
         nome: "Brinde Cultura",
-        descricao: "Contrate serviços de Cultura e ganhe uma aula extra de brinde",
+        descricao: "Contrate serviços de Cultura e ganhe um fone de ouvido Bluetooth de brinde",
         tipo: "BRINDE",
         valor: 0,
         inicio: new Date(),

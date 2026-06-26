@@ -20,14 +20,25 @@ export default function Campanhas() {
   const [campanhas,   setCampanhas]   = useState([]);
   const [produtos,    setProdutos]    = useState([]);
   const [form,        setForm]        = useState(FORM_VAZIO);
-  const [modoForm,    setModoForm]    = useState(null); // null | "novo" | id da campanha
+  const [modoForm,    setModoForm]    = useState(null);
   const [loading,     setLoading]     = useState(false);
   const [buscaProd,   setBuscaProd]   = useState("");
   const [buscaBrinde, setBuscaBrinde] = useState("");
+  const [erro,        setErro]        = useState("");
 
   async function carregar() {
-    campanhaService.listarMinhas().then((r) => setCampanhas(r.data));
-    produtoService.listar({ meus: true }).then((r) => setProdutos(r.data));
+    try {
+      const [rc, rp] = await Promise.all([
+        campanhaService.listarMinhas(),
+        produtoService.listar({ meus: true }),
+      ]);
+      setCampanhas(rc.data);
+      setProdutos(rp.data);
+    } catch (err) {
+      const msg = err.response?.data?.erro || "Erro ao carregar campanhas.";
+      setErro(msg);
+      addToast(msg, "erro");
+    }
   }
 
   useEffect(() => { carregar(); }, []);

@@ -27,10 +27,10 @@ async function buscarPorId(req, res, next) {
 
 async function criar(req, res, next) {
   try {
-    const usuarioId = req.usuario.id;
+    const usuarioId = req.body.usuarioId || req.usuario.id;
     const { nome, descricao, cnpj, endereco, logo } = req.body;
     const loja = await prisma.loja.create({
-      data: { nome, descricao, cnpj, endereco, logo, usuarioId },
+      data: { nome, descricao, cnpj, endereco, logo, usuarioId: Number(usuarioId) },
     });
     res.status(201).json(loja);
   } catch (err) { next(err); }

@@ -7,7 +7,7 @@ import "./Admin.css";
 
 const ABAS   = ["Resumo","Usuários","Lojas","Produtos","Pedidos"];
 const ROLES  = ["ADMINISTRADOR","LOJISTA","FORNECEDOR","EMPREENDEDOR","CLIENTE"];
-const STATUS = ["PENDENTE","CONFIRMADO","EM_PREPARO","ENVIADO","ENTREGUE","CANCELADO"];
+const STATUS = ["PENDENTE","CONFIRMADO","EM_PREPARO","ENVIADO","ENTREGUE","CANCELADO","DEVOLVIDO"];
 
 const ENDPOINTS = {
   "Resumo":   "/admin/resumo",
@@ -19,7 +19,7 @@ const ENDPOINTS = {
 
 function BadgeStatus({ s }) {
   const cor = { PENDENTE:"badge-orange", CONFIRMADO:"badge-blue",
-                ENTREGUE:"badge-green",  CANCELADO:"badge-red" }[s] || "badge-blue";
+                ENTREGUE:"badge-green",  CANCELADO:"badge-red", DEVOLVIDO:"badge-red" }[s] || "badge-blue";
   return <span className={`badge ${cor}`}>{s}</span>;
 }
 
@@ -29,6 +29,15 @@ export default function Admin() {
   const [aba,    setAba]    = useState("Resumo");
   const [dados,  setDados]  = useState(null);
   const [erro,   setErro]   = useState(null);
+  const [novaLoja, setNovaLoja] = useState({ nome:"", descricao:"", cnpj:"", endereco:"", usuarioId:"" });
+  const [showFormLoja, setShowFormLoja] = useState(false);
+  const [editandoLojaId, setEditandoLojaId] = useState(null);
+  const [usuariosLista, setUsuariosLista] = useState([]);
+
+  // Carrega lista de usuários para o seletor do formulário de loja
+  useEffect(() => {
+    api.get("/admin/usuarios").then((r) => setUsuariosLista(r.data)).catch(() => {});
+  }, []);
 
   const carregar = useCallback(async (abaAtual) => {
     setErro(null);
@@ -66,6 +75,16 @@ export default function Admin() {
   const toggleUsuario    = (id, ativo)   => acao(() => api.put(`/admin/usuarios/${id}`, { ativo: !ativo }),         ativo ? "Usuário desativado." : "Usuário ativado.",     "Usuários");
   const alterarRole      = (id, role)    => acao(() => api.put(`/admin/usuarios/${id}`, { role }),                   "Perfil atualizado.",                                   "Usuários");
   const toggleLoja       = (id, ativa)   => acao(() => api.put(`/admin/lojas/${id}`,    { ativa: !ativa }),          ativa ? "Loja desativada." : "Loja ativada.",            "Lojas");
+  const criarLoja = () => {
+    if (editandoLojaId) {
+      acao(() => api.put(`/admin/lojas/${editandoLojaId}`, novaLoja), "Loja atualizada!", "Lojas");
+    } else {
+      acao(() => api.post("/lojas", novaLoja), "Loja criada com sucesso!", "Lojas");
+    }
+    setNovaLoja({ nome:"", descricao:"", cnpj:"", endereco:"", usuarioId:"" });
+    setShowFormLoja(false);
+    setEditandoLojaId(null);
+  };
   const toggleProduto    = (id, ativo)   => acao(() => api.put(`/produtos/${id}`,       { ativo: !ativo }),          ativo ? "Produto desativado." : "Produto ativado.",      "Produtos");
   const alterarStatusPed = (id, status)  => acao(() => api.patch(`/pedidos/${id}/status`, { status }),              "Status atualizado.",                                   "Pedidos");
 
@@ -175,7 +194,50 @@ export default function Admin() {
           {/* ── LOJAS ──────────────────────────────────────────── */}
           {aba === "Lojas" && Array.isArray(dadosAtuais) && (
             <div className="card overflow-x">
-              <p className="admin-count">{dadosAtuais.length} loja(s) encontrada(s)</p>
+              <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14}}>
+                <p className="admin-count">{dadosAtuais.length} loja(s) encontrada(s)</p>
+                <button className="btn-primary btn-sm" onClick={() => { setShowFormLoja(!showFormLoja); setEditandoLojaId(null); setNovaLoja({ nome:"", descricao:"", cnpj:"", endereco:"", usuarioId:"" }); }}>
+                  {showFormLoja ? "✕ Cancelar" : "➕ Nova Loja"}
+                </button>
+              </div>
+
+              {showFormLoja && (
+                <div style={{background:"#f8fafc", border:"1px solid #e2e8f0", borderRadius:8, padding:20, marginBottom:20}}>
+                  <h3 style={{marginBottom:16, fontSize:"0.95rem"}}>{editandoLojaId ? "✏️ Editar Loja" : "Cadastrar Nova Loja"}</h3>
+                  <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:12}}>
+                    <div>
+                      <label style={{fontSize:"0.82rem", display:"block", marginBottom:4}}>Nome da Loja *</label>
+                      <input value={novaLoja.nome} onChange={(e) => setNovaLoja({...novaLoja, nome: e.target.value})} placeholder="Ex: Mercado Central" />
+                    </div>
+                    <div>
+                      <label style={{fontSize:"0.82rem", display:"block", marginBottom:4}}>CNPJ</label>
+                      <input value={novaLoja.cnpj} onChange={(e) => setNovaLoja({...novaLoja, cnpj: e.target.value})} placeholder="00.000.000/0001-00" />
+                    </div>
+                    <div style={{gridColumn:"1/-1"}}>
+                      <label style={{fontSize:"0.82rem", display:"block", marginBottom:4}}>Descrição</label>
+                      <input value={novaLoja.descricao} onChange={(e) => setNovaLoja({...novaLoja, descricao: e.target.value})} placeholder="Breve descrição da loja" />
+                    </div>
+                    <div style={{gridColumn:"1/-1"}}>
+                      <label style={{fontSize:"0.82rem", display:"block", marginBottom:4}}>Endereço</label>
+                      <input value={novaLoja.endereco} onChange={(e) => setNovaLoja({...novaLoja, endereco: e.target.value})} placeholder="Rua, número, bairro" />
+                    </div>
+                    <div>
+                      <label style={{fontSize:"0.82rem", display:"block", marginBottom:4}}>Proprietário da Loja</label>
+                      <select value={novaLoja.usuarioId} onChange={(e) => setNovaLoja({...novaLoja, usuarioId: e.target.value})}>
+                        <option value="">— Selecione um usuário —</option>
+                        {usuariosLista.map((u) => (
+                          <option key={u.id} value={u.id}>
+                            {u.nome} ({u.email}) — {u.role}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <button className="btn-primary" style={{marginTop:16}} onClick={criarLoja} disabled={!novaLoja.nome}>
+                    {editandoLojaId ? "Salvar Alterações" : "Cadastrar Loja"}
+                  </button>
+                </div>
+              )}
               <table className="admin-tabela">
                 <thead>
                   <tr><th>#</th><th>Nome</th><th>Proprietário</th><th>Produtos</th><th>Status</th><th>Ações</th></tr>
@@ -193,11 +255,23 @@ export default function Admin() {
                         </span>
                       </td>
                       <td>
-                        <button
-                          className={`btn-sm ${l.ativa ? "btn-danger" : "btn-success"}`}
-                          onClick={() => toggleLoja(l.id, l.ativa)}>
-                          {l.ativa ? "Desativar" : "Ativar"}
-                        </button>
+                        <div style={{display:"flex", gap:8}}>
+                          <button
+                            className="btn-sm btn-outline"
+                            onClick={() => {
+                              setNovaLoja({ nome:l.nome, descricao:l.descricao||"", cnpj:l.cnpj||"", endereco:l.endereco||"", usuarioId:l.usuarioId });
+                              setEditandoLojaId(l.id);
+                              setShowFormLoja(true);
+                              window.scrollTo({ top: 0, behavior:"smooth" });
+                            }}>
+                            ✏️ Editar
+                          </button>
+                          <button
+                            className={`btn-sm ${l.ativa ? "btn-danger" : "btn-success"}`}
+                            onClick={() => toggleLoja(l.id, l.ativa)}>
+                            {l.ativa ? "Desativar" : "Ativar"}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

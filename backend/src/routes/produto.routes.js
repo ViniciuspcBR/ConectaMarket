@@ -10,6 +10,6 @@ router.get("/:id",    buscarPorId);
 router.post("/lote",  authMiddleware, autorizar(...VENDEDOR), criarLote);
 router.post("/",      authMiddleware, autorizar(...VENDEDOR), criar);
 router.put("/:id",    authMiddleware, autorizar(...VENDEDOR), atualizar);
-router.delete("/:id", authMiddleware, autorizar("ADMINISTRADOR"), remover);
+router.delete("/:id", authMiddleware, autorizar(...VENDEDOR), remover);
 
 module.exports = router;

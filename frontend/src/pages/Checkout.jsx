@@ -1,9 +1,9 @@
 // src/pages/Checkout.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCarrinho } from "../context/CarrinhoContext";
 import { useToast } from "../context/ToastContext";
-import { pedidoService } from "../services/api";
+import { pedidoService, carteiraService } from "../services/api";
 import "./Checkout.css";
 
 const FORMAS = [
@@ -25,32 +25,74 @@ export default function Checkout() {
   const [etapa,        setEtapa]        = useState(1);
   const [loading,      setLoading]      = useState(false);
   const [pedidoCriado, setPedidoCriado] = useState(null);
+  const [errosEndereco, setErrosEndereco] = useState({});
 
-  // Campos do cartão — separados com nomes neutros para evitar autocomplete indesejado
+  // Campos do cartão
   const [numeroCartao,   setNumeroCartao]   = useState("");
   const [nomeCartao,     setNomeCartao]     = useState("");
   const [validadeCartao, setValidadeCartao] = useState("");
   const [cvvCartao,      setCvvCartao]      = useState("");
   const [parcelas,       setParcelas]       = useState("1");
+  const [errosCartao,    setErrosCartao]    = useState({});
+
+  // Cashback da carteira
+  const [saldoCarteira,  setSaldoCarteira]  = useState(0);
+  const [usarCashback,   setUsarCashback]   = useState(false);
+  const [valorCashback,  setValorCashback]  = useState(0);
+
+  useEffect(() => {
+    carteiraService.minha().then((r) => {
+      setSaldoCarteira(r.data.saldo || 0);
+    }).catch(() => {});
+  }, []);
 
   if (itens.length === 0 && !pedidoCriado) {
     navigate("/carrinho"); return null;
   }
 
-  // Formata número do cartão com espaços (ex: 1234 5678 9012 3456)
+  const descontoCashback = usarCashback ? Math.min(saldoCarteira, total, valorCashback || saldoCarteira) : 0;
+  const totalComDesconto = Math.max(0, total - descontoCashback);
+
   function formatarNumeroCartao(valor) {
     const numeros = valor.replace(/\D/g, "").slice(0, 16);
     return numeros.replace(/(.{4})/g, "$1 ").trim();
   }
 
-  // Formata validade MM/AA
   function formatarValidade(valor) {
     const numeros = valor.replace(/\D/g, "").slice(0, 4);
     if (numeros.length >= 3) return numeros.slice(0,2) + "/" + numeros.slice(2);
     return numeros;
   }
 
+  function validarEndereco() {
+    const erros = {};
+    if (!endereco.rua.trim())    erros.rua    = "Rua obrigatória";
+    if (!endereco.numero.trim()) erros.numero = "Número obrigatório";
+    if (!endereco.bairro.trim()) erros.bairro = "Bairro obrigatório";
+    if (!endereco.cep.trim())    erros.cep    = "CEP obrigatório";
+    setErrosEndereco(erros);
+    return Object.keys(erros).length === 0;
+  }
+
+  function validarCartao() {
+    const usaCartao = formaPagamento === "CARTAO_CREDITO" || formaPagamento === "CARTAO_DEBITO";
+    if (!usaCartao) return true;
+    const erros = {};
+    const numLimpo = numeroCartao.replace(/\s/g, "");
+    if (numLimpo.length < 16)        erros.numero  = "Número do cartão inválido (16 dígitos)";
+    if (!nomeCartao.trim())          erros.nome    = "Nome no cartão obrigatório";
+    if (validadeCartao.length < 5)   erros.validade = "Validade inválida (MM/AA)";
+    if (cvvCartao.length < 3)        erros.cvv     = "CVV inválido (3-4 dígitos)";
+    setErrosCartao(erros);
+    return Object.keys(erros).length === 0;
+  }
+
+  function avancarParaPagamento() {
+    if (validarEndereco()) setEtapa(2);
+  }
+
   async function finalizar() {
+    if (!validarCartao()) return;
     setLoading(true);
     try {
       const endStr = `${endereco.rua}, ${endereco.numero} — ${endereco.bairro}, ${endereco.cidade}/${endereco.estado} CEP ${endereco.cep}`;
@@ -58,6 +100,7 @@ export default function Checkout() {
         observacao:      `Entrega: ${endStr}`,
         enderecoEntrega: endStr,
         formaPagamento,
+        usarCashback:    descontoCashback > 0 ? descontoCashback : 0,
         itens: itens.map((i) => ({ produtoId: i.id, quantidade: i.quantidade })),
       });
       setPedidoCriado(data);
@@ -99,8 +142,10 @@ export default function Checkout() {
                       autoComplete="postal-code"
                       value={endereco.cep}
                       placeholder="88800-000"
-                      onChange={(e) => setEndereco({...endereco, cep: e.target.value})}
+                      className={errosEndereco.cep ? "input-erro" : ""}
+                      onChange={(e) => { setEndereco({...endereco, cep: e.target.value}); setErrosEndereco((prev) => ({...prev, cep: ""})); }}
                     />
+                    {errosEndereco.cep && <span className="campo-erro">{errosEndereco.cep}</span>}
                   </div>
                 </div>
                 <div className="field-row">
@@ -110,9 +155,10 @@ export default function Checkout() {
                       autoComplete="street-address"
                       value={endereco.rua}
                       placeholder="Rua das Flores"
-                      onChange={(e) => setEndereco({...endereco, rua: e.target.value})}
-                      required
+                      className={errosEndereco.rua ? "input-erro" : ""}
+                      onChange={(e) => { setEndereco({...endereco, rua: e.target.value}); setErrosEndereco((prev) => ({...prev, rua: ""})); }}
                     />
+                    {errosEndereco.rua && <span className="campo-erro">{errosEndereco.rua}</span>}
                   </div>
                   <div className="field" style={{flex:1}}>
                     <label>Número</label>
@@ -120,9 +166,10 @@ export default function Checkout() {
                       autoComplete="off"
                       value={endereco.numero}
                       placeholder="123"
-                      onChange={(e) => setEndereco({...endereco, numero: e.target.value})}
-                      required
+                      className={errosEndereco.numero ? "input-erro" : ""}
+                      onChange={(e) => { setEndereco({...endereco, numero: e.target.value}); setErrosEndereco((prev) => ({...prev, numero: ""})); }}
                     />
+                    {errosEndereco.numero && <span className="campo-erro">{errosEndereco.numero}</span>}
                   </div>
                 </div>
                 <div className="field-row">
@@ -132,9 +179,10 @@ export default function Checkout() {
                       autoComplete="off"
                       value={endereco.bairro}
                       placeholder="Cristo Redentor"
-                      onChange={(e) => setEndereco({...endereco, bairro: e.target.value})}
-                      required
+                      className={errosEndereco.bairro ? "input-erro" : ""}
+                      onChange={(e) => { setEndereco({...endereco, bairro: e.target.value}); setErrosEndereco((prev) => ({...prev, bairro: ""})); }}
                     />
+                    {errosEndereco.bairro && <span className="campo-erro">{errosEndereco.bairro}</span>}
                   </div>
                   <div className="field">
                     <label>Cidade</label>
@@ -157,8 +205,7 @@ export default function Checkout() {
                 <button
                   className="btn-primary"
                   style={{marginTop:8}}
-                  onClick={() => setEtapa(2)}
-                  disabled={!endereco.rua || !endereco.numero || !endereco.bairro}
+                  onClick={avancarParaPagamento}
                 >
                   Continuar para Pagamento →
                 </button>
@@ -171,12 +218,53 @@ export default function Checkout() {
             <div className="card">
               <h2 className="checkout-titulo">💳 Forma de Pagamento</h2>
 
+              {/* Cashback disponível */}
+              {saldoCarteira > 0 && (
+                <div style={{
+                  background:"#f0fdf4", border:"1px solid #86efac",
+                  borderRadius:8, padding:"12px 16px", marginBottom:16
+                }}>
+                  <label style={{display:"flex", alignItems:"center", gap:10, cursor:"pointer"}}>
+                    <input
+                      type="checkbox"
+                      checked={usarCashback}
+                      onChange={(e) => setUsarCashback(e.target.checked)}
+                      style={{width:18, height:18}}
+                    />
+                    <span style={{fontWeight:600, color:"#15803d"}}>
+                      💰 Usar saldo da Carteira (R$ {saldoCarteira.toFixed(2)} disponível)
+                    </span>
+                  </label>
+                  {usarCashback && (
+                    <div style={{marginTop:10}}>
+                      <label style={{fontSize:"0.85rem", color:"#166534", display:"block", marginBottom:4}}>
+                        Quanto deseja usar? (máximo R$ {Math.min(saldoCarteira, total).toFixed(2)})
+                      </label>
+                      <input
+                        type="number"
+                        min="0.01"
+                        max={Math.min(saldoCarteira, total)}
+                        step="0.01"
+                        value={valorCashback}
+                        onChange={(e) => setValorCashback(Number(e.target.value))}
+                        placeholder={`Ex: ${Math.min(saldoCarteira, total).toFixed(2)}`}
+                        style={{width:140}}
+                      />
+                      <p style={{fontSize:"0.82rem", color:"#166534", marginTop:6}}>
+                        Desconto aplicado: <strong>R$ {descontoCashback.toFixed(2)}</strong>
+                        {" "}→ Total a pagar: <strong>R$ {totalComDesconto.toFixed(2)}</strong>
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="formas-grid">
                 {FORMAS.map((f) => (
                   <button
                     key={f.valor}
                     className={`forma-btn ${formaPagamento === f.valor ? "forma-btn--ativo" : ""}`}
-                    onClick={() => setFormaPagamento(f.valor)}
+                    onClick={() => { setFormaPagamento(f.valor); setErrosCartao({}); }}
                   >
                     <span className="forma-icone">{f.icone}</span>
                     <span className="forma-label">{f.label}</span>
@@ -204,7 +292,6 @@ export default function Checkout() {
               {/* Cartão de Crédito ou Débito */}
               {(formaPagamento === "CARTAO_CREDITO" || formaPagamento === "CARTAO_DEBITO") && (
                 <div className="cartao-form">
-                  {/* Número */}
                   <div className="field">
                     <label>Número do Cartão</label>
                     <input
@@ -214,10 +301,11 @@ export default function Checkout() {
                       value={numeroCartao}
                       placeholder="0000 0000 0000 0000"
                       maxLength={19}
-                      onChange={(e) => setNumeroCartao(formatarNumeroCartao(e.target.value))}
+                      className={errosCartao.numero ? "input-erro" : ""}
+                      onChange={(e) => { setNumeroCartao(formatarNumeroCartao(e.target.value)); setErrosCartao((p) => ({...p, numero:""})); }}
                     />
+                    {errosCartao.numero && <span className="campo-erro">{errosCartao.numero}</span>}
                   </div>
-                  {/* Nome */}
                   <div className="field">
                     <label>Nome impresso no Cartão</label>
                     <input
@@ -225,11 +313,12 @@ export default function Checkout() {
                       autoComplete="cc-name"
                       value={nomeCartao}
                       placeholder="NOME SOBRENOME"
-                      onChange={(e) => setNomeCartao(e.target.value.toUpperCase())}
+                      className={errosCartao.nome ? "input-erro" : ""}
+                      onChange={(e) => { setNomeCartao(e.target.value.toUpperCase()); setErrosCartao((p) => ({...p, nome:""})); }}
                     />
+                    {errosCartao.nome && <span className="campo-erro">{errosCartao.nome}</span>}
                   </div>
                   <div className="field-row">
-                    {/* Validade */}
                     <div className="field">
                       <label>Validade</label>
                       <input
@@ -239,10 +328,11 @@ export default function Checkout() {
                         value={validadeCartao}
                         placeholder="MM/AA"
                         maxLength={5}
-                        onChange={(e) => setValidadeCartao(formatarValidade(e.target.value))}
+                        className={errosCartao.validade ? "input-erro" : ""}
+                        onChange={(e) => { setValidadeCartao(formatarValidade(e.target.value)); setErrosCartao((p) => ({...p, validade:""})); }}
                       />
+                      {errosCartao.validade && <span className="campo-erro">{errosCartao.validade}</span>}
                     </div>
-                    {/* CVV — type text, NÃO password */}
                     <div className="field">
                       <label>CVV</label>
                       <input
@@ -252,17 +342,18 @@ export default function Checkout() {
                         value={cvvCartao}
                         placeholder="123"
                         maxLength={4}
-                        onChange={(e) => setCvvCartao(e.target.value.replace(/\D/g, "").slice(0,4))}
+                        className={errosCartao.cvv ? "input-erro" : ""}
+                        onChange={(e) => { setCvvCartao(e.target.value.replace(/\D/g, "").slice(0,4)); setErrosCartao((p) => ({...p, cvv:""})); }}
                       />
+                      {errosCartao.cvv && <span className="campo-erro">{errosCartao.cvv}</span>}
                     </div>
-                    {/* Parcelas apenas no crédito */}
                     {formaPagamento === "CARTAO_CREDITO" && (
                       <div className="field">
                         <label>Parcelas</label>
                         <select value={parcelas} onChange={(e) => setParcelas(e.target.value)}>
                           {[1,2,3,4,5,6,10,12].map((n) => (
                             <option key={n} value={n}>
-                              {n}x de R$ {(total / n).toFixed(2)}
+                              {n}x de R$ {(totalComDesconto / n).toFixed(2)}
                             </option>
                           ))}
                         </select>
@@ -303,8 +394,14 @@ export default function Checkout() {
                   <span>Pagamento</span>
                   <strong>{formaPagamento.replace(/_/g," ")}</strong>
                 </div>
+                {pedidoCriado.usoCashback > 0 && (
+                  <div>
+                    <span>Cashback usado</span>
+                    <strong style={{color:"#16a34a"}}>− R$ {pedidoCriado.usoCashback.toFixed(2)}</strong>
+                  </div>
+                )}
                 <div>
-                  <span>Total</span>
+                  <span>Total pago</span>
                   <strong>R$ {pedidoCriado.total.toFixed(2)}</strong>
                 </div>
                 <div>
@@ -331,8 +428,18 @@ export default function Checkout() {
               </div>
             ))}
             <div className="resumo-total-line">
-              <span>Total</span>
+              <span>Subtotal</span>
               <strong>R$ {total.toFixed(2)}</strong>
+            </div>
+            {descontoCashback > 0 && (
+              <div className="resumo-total-line" style={{color:"#16a34a"}}>
+                <span>Cashback</span>
+                <strong>− R$ {descontoCashback.toFixed(2)}</strong>
+              </div>
+            )}
+            <div className="resumo-total-line" style={{borderTop:"2px solid #e2e8f0", paddingTop:8, marginTop:4}}>
+              <span><strong>Total</strong></span>
+              <strong style={{fontSize:"1.1rem"}}>R$ {totalComDesconto.toFixed(2)}</strong>
             </div>
           </div>
         )}

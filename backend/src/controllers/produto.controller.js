@@ -116,12 +116,30 @@ async function buscarPorId(req, res, next) {
 // POST /api/produtos — cadastro individual
 async function criar(req, res, next) {
   try {
-    const { nome, descricao, preco, estoque, imagem, tipo, categoria,
-            lojaId, fornecedorId, empreendedorId } = req.body;
+    const { nome, descricao, preco, estoque, imagem, tipo, categoria } = req.body;
+    let { lojaId, fornecedorId, empreendedorId } = req.body;
+
+    // Se nenhum vínculo foi enviado, vincula automaticamente ao perfil do usuário logado
+    if (!lojaId && !fornecedorId && !empreendedorId) {
+      const u = req.usuario;
+      if (u.role === "LOJISTA") {
+        const loja = await prisma.loja.findFirst({ where: { usuarioId: u.id } });
+        if (loja) lojaId = loja.id;
+      } else if (u.role === "FORNECEDOR") {
+        const forn = await prisma.fornecedor.findFirst({ where: { usuarioId: u.id } });
+        if (forn) fornecedorId = forn.id;
+      } else if (u.role === "EMPREENDEDOR") {
+        const emp = await prisma.empreendedor.findFirst({ where: { usuarioId: u.id } });
+        if (emp) empreendedorId = emp.id;
+      }
+    }
 
     const produto = await prisma.produto.create({
       data: { nome, descricao, preco: Number(preco), estoque: Number(estoque),
-              imagem, tipo, categoria, lojaId, fornecedorId, empreendedorId },
+              imagem, tipo, categoria,
+              lojaId:         lojaId         ? Number(lojaId)         : null,
+              fornecedorId:   fornecedorId   ? Number(fornecedorId)   : null,
+              empreendedorId: empreendedorId ? Number(empreendedorId) : null },
     });
     res.status(201).json(produto);
   } catch (err) { next(err); }

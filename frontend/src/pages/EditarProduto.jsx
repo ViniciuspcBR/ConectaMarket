@@ -1,7 +1,8 @@
 // src/pages/EditarProduto.jsx
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { produtoService } from "../services/api";
+import { produtoService, lojaService } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import "./Auth.css";
 
@@ -11,10 +12,12 @@ const CATEGORIAS = [
 ];
 
 export default function EditarProduto() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const { addToast } = useToast();
-  const [form, setForm] = useState(null);
+  const { id }          = useParams();
+  const navigate        = useNavigate();
+  const { addToast }    = useToast();
+  const { usuario }     = useAuth();
+  const [form,   setForm]   = useState(null);
+  const [lojas,  setLojas]  = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -28,8 +31,10 @@ export default function EditarProduto() {
         tipo:      data.tipo,
         imagem:    data.imagem || "",
         ativo:     data.ativo,
+        lojaId:    data.lojaId || "",
       });
     });
+    lojaService.listar().then((r) => setLojas(r.data)).catch(() => {});
   }, [id]);
 
   function handleChange(e) {
@@ -45,6 +50,7 @@ export default function EditarProduto() {
         ...form,
         preco:   parseFloat(form.preco),
         estoque: parseInt(form.estoque),
+        lojaId:  form.lojaId ? Number(form.lojaId) : null,
       });
       addToast("Produto atualizado com sucesso!");
       navigate("/vendas");
@@ -97,6 +103,20 @@ export default function EditarProduto() {
               </select>
             </div>
           </div>
+
+          {/* Seletor de loja */}
+          {(usuario?.role === "ADMINISTRADOR" || usuario?.role === "LOJISTA") && lojas.length > 0 && (
+            <div className="field">
+              <label>Vincular à Loja</label>
+              <select name="lojaId" value={form.lojaId} onChange={handleChange}>
+                <option value="">— Sem loja (produto independente) —</option>
+                {lojas.map((l) => (
+                  <option key={l.id} value={l.id}>{l.nome}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div className="field">
             <label>URL da Imagem</label>
             <input name="imagem" value={form.imagem} onChange={handleChange} placeholder="https://..." />

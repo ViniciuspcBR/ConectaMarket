@@ -1,7 +1,8 @@
 // src/pages/NovoProduto.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { produtoService } from "../services/api";
+import { produtoService, lojaService } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import "./Auth.css";
 
@@ -11,23 +12,32 @@ const CATEGORIAS = [
 ];
 
 export default function NovoProduto() {
-  const navigate     = useNavigate();
-  const { addToast } = useToast();
+  const navigate        = useNavigate();
+  const { addToast }    = useToast();
+  const { usuario }     = useAuth();
+  const [lojas,  setLojas]  = useState([]);
   const [form, setForm] = useState({
     nome:"", descricao:"", preco:"", estoque:"",
-    categoria:"Alimentos", tipo:"PRODUTO", imagem:"",
+    categoria:"Alimentos", tipo:"PRODUTO", imagem:"", lojaId:"",
   });
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Admin pode escolher qualquer loja; LOJISTA já tem a dele
+    lojaService.listar().then((r) => setLojas(r.data)).catch(() => {});
+  }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
     try {
-      await produtoService.criar({
+      const payload = {
         ...form,
         preco:   parseFloat(form.preco),
         estoque: parseInt(form.estoque),
-      });
+        lojaId:  form.lojaId ? Number(form.lojaId) : undefined,
+      };
+      await produtoService.criar(payload);
       addToast("Produto cadastrado com sucesso!");
       navigate("/vendas");
     } catch (err) {
@@ -51,12 +61,12 @@ export default function NovoProduto() {
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="field">
             <label>Nome do produto / serviço</label>
-            <input name="nome" value={form.nome}
+            <input value={form.nome}
               onChange={(e) => setForm({...form, nome:e.target.value})} required />
           </div>
           <div className="field">
             <label>Descrição</label>
-            <textarea name="descricao" rows={3} value={form.descricao}
+            <textarea rows={3} value={form.descricao}
               onChange={(e) => setForm({...form, descricao:e.target.value})} />
           </div>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
@@ -88,6 +98,21 @@ export default function NovoProduto() {
               </select>
             </div>
           </div>
+
+          {/* Seletor de loja — visível para admin e lojista */}
+          {(usuario?.role === "ADMINISTRADOR" || usuario?.role === "LOJISTA") && lojas.length > 0 && (
+            <div className="field">
+              <label>Vincular à Loja</label>
+              <select value={form.lojaId}
+                onChange={(e) => setForm({...form, lojaId:e.target.value})}>
+                <option value="">— Sem loja (produto independente) —</option>
+                {lojas.map((l) => (
+                  <option key={l.id} value={l.id}>{l.nome}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div className="field">
             <label>URL da Imagem (opcional)</label>
             <input value={form.imagem} placeholder="https://..."
