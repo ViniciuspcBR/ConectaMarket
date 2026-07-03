@@ -148,7 +148,7 @@ async function criar(req, res, next) {
 
 // Função auxiliar — estorna cashback e brindes de um pedido
 async function estornarBeneficiosPedido(pedido) {
-  // Estornar cashback creditado quando foi marcado ENTREGUE
+  // 1) Estornar cashback que foi CREDITADO ao entregar o pedido
   const transacoesCashback = await prisma.carteiraTransacao.findMany({
     where: { pedidoId: pedido.id, tipo: "CASHBACK" },
   });
@@ -166,13 +166,36 @@ async function estornarBeneficiosPedido(pedido) {
         carteiraId: carteira.id,
         tipo:       "ESTORNO",
         valor:      t.valor,
-        descricao:  `Estorno de cashback — Pedido #${pedido.id} cancelado/devolvido`,
+        descricao:  `Estorno de cashback ganho — Pedido #${pedido.id} cancelado/devolvido`,
         pedidoId:   pedido.id,
       },
     });
   }
 
-  // Cancelar todos os brindes vinculados ao pedido
+  // 2) Devolver cashback que foi USADO como desconto na compra
+  if (pedido.usoCashback && pedido.usoCashback > 0) {
+    let carteira = await prisma.carteira.findUnique({ where: { usuarioId: pedido.clienteId } });
+    if (!carteira) {
+      carteira = await prisma.carteira.create({
+        data: { usuarioId: pedido.clienteId, saldo: 0 },
+      });
+    }
+    await prisma.carteira.update({
+      where: { id: carteira.id },
+      data:  { saldo: carteira.saldo + pedido.usoCashback },
+    });
+    await prisma.carteiraTransacao.create({
+      data: {
+        carteiraId: carteira.id,
+        tipo:       "CASHBACK",
+        valor:      pedido.usoCashback,
+        descricao:  `Devolução de cashback usado — Pedido #${pedido.id} cancelado/devolvido`,
+        pedidoId:   pedido.id,
+      },
+    });
+  }
+
+  // 3) Cancelar todos os brindes vinculados ao pedido
   await prisma.brindeRecebido.updateMany({
     where: { pedidoId: pedido.id },
     data:  { status: "CANCELADO" },
@@ -188,6 +211,12 @@ async function atualizarStatus(req, res, next) {
     const statusValidos = ["PENDENTE","CONFIRMADO","EM_PREPARO","ENVIADO","ENTREGUE","CANCELADO","DEVOLVIDO"];
     if (!statusValidos.includes(status))
       return res.status(400).json({ erro: "Status inválido." });
+
+    // CLIENTE só pode solicitar DEVOLVIDO nos próprios pedidos
+    if (req.usuario.role === "CLIENTE") {
+      if (status !== "DEVOLVIDO")
+        return res.status(403).json({ erro: "Clientes só podem solicitar devolução." });
+    }
 
     const pedido = await prisma.pedido.findUnique({
       where:   { id: pedidoId },

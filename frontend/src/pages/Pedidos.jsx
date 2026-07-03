@@ -84,6 +84,8 @@ export default function Pedidos() {
   const [confirmarId, setConfirmarId] = useState(null);
   const [detalhe,    setDetalhe]    = useState(null);
   const [verExcluidos, setVerExcluidos] = useState(false);
+  const [modalDevolucao, setModalDevolucao] = useState(null); // pedido sendo devolvido
+  const [motivoDevolucao, setMotivoDevolucao] = useState("");
 
   const isVendedor = ["ADMINISTRADOR","LOJISTA","FORNECEDOR"].includes(usuario?.role);
 
@@ -113,6 +115,20 @@ export default function Pedidos() {
     } catch (err) {
       addToast(err.response?.data?.erro || "Erro ao excluir pedido.", "erro");
     }
+  }
+
+  async function handleDevolucao() {
+    if (!motivoDevolucao.trim()) {
+      addToast("Descreva o motivo da devolução.", "erro");
+      return;
+    }
+    try {
+      await pedidoService.atualizarStatus(modalDevolucao.id, "DEVOLVIDO");
+      addToast("Solicitação de devolução enviada com sucesso.");
+      setModalDevolucao(null);
+      setMotivoDevolucao("");
+      carregar();
+    } catch { addToast("Erro ao solicitar devolução.", "erro"); }
   }
 
   const lista = verExcluidos ? excluidos : pedidos;
@@ -166,16 +182,26 @@ export default function Pedidos() {
 
               <div className="pedido-footer">
                 <span className="pedido-total">R$ {Number(p.total).toFixed(2)}</span>
-                <span className="pedido-data">
-                  {new Date(p.criadoEm).toLocaleDateString("pt-BR")}
-                </span>
+                <div style={{display:"flex", alignItems:"center", gap:10}}>
+                  <span className="pedido-data">
+                    {new Date(p.criadoEm).toLocaleDateString("pt-BR")}
+                  </span>
+                </div>
               </div>
 
               <div className="pedido-acoes">
-                {/* Ver detalhes */}
+                {/* Ver detalhes + Solicitar devolução na mesma linha */}
                 <button className="btn-outline btn-sm" onClick={() => setDetalhe(p)}>
                   🔍 Ver Detalhes
                 </button>
+
+                {usuario?.role === "CLIENTE" && !verExcluidos && p.status === "ENTREGUE" && (
+                  <button
+                    onClick={() => { setModalDevolucao(p); setMotivoDevolucao(""); }}
+                    style={{background:"#fee2e2", color:"#dc2626", border:"1px solid #dc2626", borderRadius:6, cursor:"pointer", padding:"6px 14px", fontSize:"0.82rem", fontWeight:600}}>
+                    Solicitar Devolução
+                  </button>
+                )}
 
                 {/* Alterar status — só vendedor, só pedidos ativos */}
                 {isVendedor && !verExcluidos && (
@@ -199,6 +225,7 @@ export default function Pedidos() {
                     </button>
                   )
                 )}
+
               </div>
             </div>
           ))}
@@ -206,6 +233,39 @@ export default function Pedidos() {
       )}
 
       <ModalDetalhe pedido={detalhe} onFechar={() => setDetalhe(null)} />
+
+      {/* Modal de Devolução */}
+      {modalDevolucao && (
+        <div className="modal-overlay" onClick={() => setModalDevolucao(null)}>
+          <div className="modal-box card" onClick={(e) => e.stopPropagation()} style={{maxWidth:440}}>
+            <div className="modal-header">
+              <h2>↩️ Solicitar Devolução</h2>
+              <button className="modal-fechar" onClick={() => setModalDevolucao(null)}>✕</button>
+            </div>
+            <p style={{color:"#64748b", marginBottom:16, fontSize:"0.9rem"}}>
+              Pedido <strong>#{modalDevolucao.id}</strong> — R$ {Number(modalDevolucao.total).toFixed(2)}
+            </p>
+            <div className="field">
+              <label style={{fontWeight:600, display:"block", marginBottom:8}}>
+                Motivo da devolução *
+              </label>
+              <textarea
+                rows={4}
+                value={motivoDevolucao}
+                onChange={(e) => setMotivoDevolucao(e.target.value)}
+                placeholder="Descreva o motivo da devolução..."
+                style={{width:"100%", padding:"10px 12px", borderRadius:8, border:"1px solid #cbd5e1", fontSize:"0.9rem", resize:"vertical"}}
+              />
+            </div>
+            <div style={{display:"flex", gap:12, marginTop:16, justifyContent:"flex-end"}}>
+              <button className="btn-outline" onClick={() => setModalDevolucao(null)}>Cancelar</button>
+              <button className="btn-danger" onClick={handleDevolucao}>
+                Confirmar Devolução
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -106,7 +106,7 @@ async function main() {
   // ── Produtos — Alimentos (Loja) ───────────────────────────────
   const produtosAlimentos = [
     { nome: "Arroz Branco 5kg", descricao: "Arroz tipo 1, grãos selecionados", preco: 22.90, estoque: 80, imagem: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&h=300&fit=crop", categoria: "Alimentos" },
-    { nome: "Feijão Preto 1kg", descricao: "Feijão preto selecionado, safra nova", preco: 8.90, estoque: 60, imagem: "https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=400&h=300&fit=crop", categoria: "Alimentos" },
+    { nome: "Feijão Preto 1kg", descricao: "Feijão preto selecionado, safra nova", preco: 8.90, estoque: 60, imagem: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ1XDYwbQzhoWhmaQZNqRB9ZqGDSqpqmUQ2IBW5jHBPNw&s=10", categoria: "Alimentos" },
     { nome: "Óleo de Soja 900ml", descricao: "Óleo vegetal de soja refinado", preco: 6.50, estoque: 50, imagem: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400&h=300&fit=crop", categoria: "Alimentos" },
     { nome: "Macarrão Espaguete 500g", descricao: "Massa de sêmola de trigo durum", preco: 4.20, estoque: 70, imagem: "https://images.unsplash.com/photo-1551462147-ff29053bfc14?w=400&h=300&fit=crop", categoria: "Alimentos" },
     { nome: "Leite Integral 1L", descricao: "Leite UHT integral longa vida", preco: 5.90, estoque: 90, imagem: "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400&h=300&fit=crop", categoria: "Alimentos" },
@@ -131,7 +131,7 @@ async function main() {
 
   // ── Serviços — Saúde e Beleza ─────────────────────────────────
   const servicosBeauty = [
-    { nome: "Corte de Cabelo Feminino", descricao: "Corte com lavagem e finalização", preco: 65.00, estoque: 999, imagem: "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=400&h=300&fit=crop", categoria: "Saúde e Beleza" },
+    { nome: "Corte de Cabelo Feminino", descricao: "Corte com lavagem e finalização", preco: 65.00, estoque: 999, imagem: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRZTdog0uXMWHgbUrXBU2TGKDuWub_Z3KYhB6g-_hIWkQ&s=10", categoria: "Saúde e Beleza" },
     { nome: "Coloração Completa", descricao: "Coloração com produtos profissionais", preco: 150.00, estoque: 999, imagem: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=300&fit=crop", categoria: "Saúde e Beleza" },
     { nome: "Manicure e Pedicure", descricao: "Tratamento completo das unhas", preco: 55.00, estoque: 999, imagem: "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=300&fit=crop", categoria: "Saúde e Beleza" },
     { nome: "Massagem Relaxante 1h", descricao: "Massagem terapêutica com óleos essenciais", preco: 120.00, estoque: 999, imagem: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&h=300&fit=crop", categoria: "Saúde e Beleza" },
