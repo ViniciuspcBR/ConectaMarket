@@ -161,7 +161,7 @@ docker-compose up --build
 Em outro terminal:
 
 ```bash
-docker exec -it marketplace_backend npx prisma migrate dev --name v9_devolvido_cashback_uso
+docker exec -it marketplace_backend npx prisma migrate dev --name v10_carteira_pagamento
 ```
 
 #### 4. Popular o banco
@@ -207,7 +207,7 @@ docker-compose down
 ```bash
 docker-compose down -v
 docker-compose up --build
-docker exec -it marketplace_backend npx prisma migrate dev --name v9_devolvido_cashback_uso
+docker exec -it marketplace_backend npx prisma migrate dev --name v10_carteira_pagamento
 docker exec marketplace_backend node prisma/seed.js
 ```
 
@@ -244,7 +244,7 @@ As senhas são armazenadas com hash utilizando bcryptjs (10 salt rounds). Nenhum
 **Autenticação por JWT**
 Após o login, o servidor gera um JSON Web Token (JWT) assinado com uma chave secreta. Esse token é enviado pelo frontend em todas as requisições seguintes no cabeçalho `Authorization: Bearer <token>`, permitindo que o backend identifique o usuário sem precisar consultar o banco a cada requisição.
 
-O token possui validade de 24 horas. Caso expire, o sistema detecta automaticamente o erro de autenticação (HTTP 401) e redireciona o usuário para a tela de login, onde um novo token é gerado ao entrar novamente.
+O token possui validade de 8 horas. Caso expire, o sistema detecta automaticamente o erro de autenticação (HTTP 401) e redireciona o usuário para a tela de login, onde um novo token é gerado ao entrar novamente.
 
 **Controle de acesso por perfil**
 Cada rota da API é protegida pelo middleware `autorizar(...roles)`, que verifica o perfil do usuário contido no token (ADMINISTRADOR, LOJISTA, FORNECEDOR, EMPREENDEDOR ou CLIENTE) e bloqueia o acesso caso o perfil não tenha permissão para aquela operação.
