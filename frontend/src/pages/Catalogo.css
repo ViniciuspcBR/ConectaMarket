@@ -48,7 +48,7 @@
 .produto-desconto-badge {
   position: absolute;
   top: 8px; left: 8px;
-  background: #dc2626;
+  background: #16a34a;
   color: #fff;
   font-weight: 800;
   font-size: 0.78rem;
@@ -61,7 +61,7 @@
   text-decoration: line-through;
   margin-top: 6px;
 }
-.produto-preco--desconto { color: #dc2626; margin-top: 2px; }
+.produto-preco--desconto { color: #16a34a; margin-top: 2px; }
 .produto-campanha-nome {
   font-size: 0.72rem;
   color: #16a34a;
@@ -86,7 +86,7 @@
 .produto-cashback-badge {
   position: absolute;
   top: 8px; left: 8px;
-  background: #16a34a;
+  background: #7c3aed;
   color: #fff;
   font-weight: 700;
   font-size: 0.7rem;
@@ -96,12 +96,12 @@
 .produto-brinde-badge {
   position: absolute;
   top: 8px; left: 8px;
-  background: #7c3aed;
+  background: #dc2626;
   color: #fff;
   font-weight: 700;
   font-size: 0.72rem;
   padding: 3px 8px;
   border-radius: 6px;
 }
-.produto-campanha-nome--cashback { color: #16a34a; }
-.produto-campanha-nome--brinde   { color: #7c3aed; }
+.produto-campanha-nome--cashback { color: #7c3aed; }
+.produto-campanha-nome--brinde   { color: #dc2626; }

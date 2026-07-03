@@ -392,7 +392,17 @@ export default function Checkout() {
               <div className="confirmacao-info">
                 <div>
                   <span>Pagamento</span>
-                  <strong>{formaPagamento.replace(/_/g," ")}</strong>
+                  <strong>{({
+                    PIX:                     "PIX",
+                    CARTAO_CREDITO:          "Cartão de Crédito",
+                    CARTAO_DEBITO:           "Cartão de Débito",
+                    BOLETO:                  "Boleto Bancário",
+                    CARTEIRA:                "💰 Carteira (100% cashback)",
+                    CARTEIRA_PIX:            "💰 Carteira + PIX",
+                    CARTEIRA_CARTAO_CREDITO: "💰 Carteira + Cartão de Crédito",
+                    CARTEIRA_CARTAO_DEBITO:  "💰 Carteira + Cartão de Débito",
+                    CARTEIRA_BOLETO:         "💰 Carteira + Boleto",
+                  })[pedidoCriado.formaPagamento] || pedidoCriado.formaPagamento}</strong>
                 </div>
                 {pedidoCriado.usoCashback > 0 && (
                   <div>

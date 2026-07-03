@@ -113,11 +113,27 @@ async function criar(req, res, next) {
 
     const total = Math.max(0, subtotalItens - valorUsoCashback);
 
+    // Define forma de pagamento considerando uso de cashback
+    let formaFinal;
+    if (valorUsoCashback > 0 && total === 0) {
+      formaFinal = "CARTEIRA";
+    } else if (valorUsoCashback > 0) {
+      const mapaForma = {
+        PIX:            "CARTEIRA_PIX",
+        CARTAO_CREDITO: "CARTEIRA_CARTAO_CREDITO",
+        CARTAO_DEBITO:  "CARTEIRA_CARTAO_DEBITO",
+        BOLETO:         "CARTEIRA_BOLETO",
+      };
+      formaFinal = mapaForma[formaPagamento] || "CARTEIRA_PIX";
+    } else {
+      formaFinal = formaPagamento || "PIX";
+    }
+
     const pedido = await prisma.pedido.create({
       data: {
         clienteId, lojaId, observacao, total,
         usoCashback:     valorUsoCashback,
-        formaPagamento:  formaPagamento  || "PIX",
+        formaPagamento:  formaFinal,
         enderecoEntrega: enderecoEntrega || null,
         itens: { create: itensMontados },
       },
@@ -307,9 +323,38 @@ async function atualizarStatus(req, res, next) {
       }
     }
 
-    // ── Estorno — quando pedido é CANCELADO ou DEVOLVIDO após ter sido ENTREGUE ──
-    if ((status === "CANCELADO" || status === "DEVOLVIDO") && pedido.status === "ENTREGUE") {
-      await estornarBeneficiosPedido(pedido);
+    // ── Estorno — quando pedido é CANCELADO ou DEVOLVIDO ──
+    if (status === "CANCELADO" || status === "DEVOLVIDO") {
+      // Sempre estorna cashback usado (independente do status anterior)
+      if (pedido.usoCashback > 0) {
+        let carteira = await prisma.carteira.findUnique({ where: { usuarioId: pedido.clienteId } });
+        if (!carteira) {
+          carteira = await prisma.carteira.create({ data: { usuarioId: pedido.clienteId, saldo: 0 } });
+        }
+        // Verifica se já não foi estornado antes
+        const jaEstornado = await prisma.carteiraTransacao.findFirst({
+          where: { pedidoId: pedido.id, tipo: "CASHBACK", descricao: { contains: "Devolução de cashback usado" } }
+        });
+        if (!jaEstornado) {
+          await prisma.carteira.update({
+            where: { id: carteira.id },
+            data:  { saldo: carteira.saldo + pedido.usoCashback },
+          });
+          await prisma.carteiraTransacao.create({
+            data: {
+              carteiraId: carteira.id,
+              tipo:       "CASHBACK",
+              valor:      pedido.usoCashback,
+              descricao:  `Devolução de cashback usado — Pedido #${pedido.id} cancelado/devolvido`,
+              pedidoId:   pedido.id,
+            },
+          });
+        }
+      }
+      // Estorna cashback ganho e brindes apenas se já estava ENTREGUE
+      if (pedido.status === "ENTREGUE") {
+        await estornarBeneficiosPedido(pedido);
+      }
     }
 
     const atualizado = await prisma.pedido.update({
@@ -338,6 +383,27 @@ async function excluir(req, res, next) {
 
     if (!["PENDENTE","CANCELADO","DEVOLVIDO"].includes(pedido.status))
       return res.status(400).json({ erro: "Só é possível excluir pedidos pendentes, cancelados ou devolvidos." });
+
+    // Estorna cashback usado se ainda não foi estornado (pedido PENDENTE)
+    if (pedido.status === "PENDENTE" && pedido.usoCashback > 0) {
+      let carteira = await prisma.carteira.findUnique({ where: { usuarioId: pedido.clienteId } });
+      if (!carteira) {
+        carteira = await prisma.carteira.create({ data: { usuarioId: pedido.clienteId, saldo: 0 } });
+      }
+      await prisma.carteira.update({
+        where: { id: carteira.id },
+        data:  { saldo: carteira.saldo + pedido.usoCashback },
+      });
+      await prisma.carteiraTransacao.create({
+        data: {
+          carteiraId: carteira.id,
+          tipo:       "CASHBACK",
+          valor:      pedido.usoCashback,
+          descricao:  `Devolução de cashback — Pedido #${pedido.id} excluído`,
+          pedidoId:   pedido.id,
+        },
+      });
+    }
 
     await prisma.pedido.update({
       where: { id: pedidoId },

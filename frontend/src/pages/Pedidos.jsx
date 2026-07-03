@@ -30,7 +30,17 @@ function ModalDetalhe({ pedido, onFechar }) {
         </div>
         <div className="modal-info-linha">
           <span>Forma de Pagamento</span>
-          <strong>{(pedido.formaPagamento || "—").replace(/_/g," ")}</strong>
+          <strong>{({
+            PIX:                     "PIX",
+            CARTAO_CREDITO:          "Cartão de Crédito",
+            CARTAO_DEBITO:           "Cartão de Débito",
+            BOLETO:                  "Boleto Bancário",
+            CARTEIRA:                "💰 Carteira (100% cashback)",
+            CARTEIRA_PIX:            "💰 Carteira + PIX",
+            CARTEIRA_CARTAO_CREDITO: "💰 Carteira + Cartão de Crédito",
+            CARTEIRA_CARTAO_DEBITO:  "💰 Carteira + Cartão de Débito",
+            CARTEIRA_BOLETO:         "💰 Carteira + Boleto",
+          }[pedido.formaPagamento] || pedido.formaPagamento || "—")}</strong>
         </div>
         <div className="modal-info-linha">
           <span>Data</span>

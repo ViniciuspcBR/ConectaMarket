@@ -43,9 +43,9 @@ async function main() {
   });
 
   const uEmp2 = await prisma.usuario.upsert({
-    where: { email: "pizzaria@abadeus.com" },
+    where: { email: "servicos@abadeus.com" },
     update: {},
-    create: { nome: "Pizzaria do Bairro", email: "pizzaria@abadeus.com", senha: senhaHash, role: "EMPREENDEDOR" },
+    create: { nome: "Serviços do Bairro", email: "servicos@abadeus.com", senha: senhaHash, role: "EMPREENDEDOR" },
   });
 
   const uCliente = await prisma.usuario.upsert({
@@ -96,9 +96,9 @@ async function main() {
     where: { usuarioId: uEmp2.id },
     update: {},
     create: {
-      nomeNegocio: "Pizzaria do Bairro",
-      descricao: "Pizzas artesanais assadas no forno a lenha",
-      categoria: "Alimentos",
+      nomeNegocio: "Serviços do Bairro",
+      descricao: "Serviços Gerais para todo o Bairro",
+      categoria: "Serviços",
       usuarioId: uEmp2.id,
     },
   });
@@ -297,7 +297,7 @@ async function main() {
   console.log("   mercado@abadeus.com     → LOJISTA");
   console.log("   fornecedor@abadeus.com  → FORNECEDOR");
   console.log("   salao@abadeus.com       → EMPREENDEDOR");
-  console.log("   pizzaria@abadeus.com    → EMPREENDEDOR");
+  console.log("   servicos@abadeus.com    → EMPREENDEDOR");
   console.log("   cliente@abadeus.com     → CLIENTE");
   console.log("   Senha de todos: senha123");
 }
