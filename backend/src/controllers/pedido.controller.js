@@ -4,10 +4,39 @@ const prisma = require("../config/prisma");
 // Helper — filtra pedidos por perfil de vendedor
 async function filtroPorPerfil(usuarioId, role) {
   if (role === "ADMINISTRADOR") return { excluido: false };
+
   if (role === "LOJISTA") {
-    const loja = await prisma.loja.findUnique({ where: { usuarioId } });
+    const loja = await prisma.loja.findFirst({ where: { usuarioId } });
     return loja ? { lojaId: loja.id, excluido: false } : { id: -1 };
   }
+
+  if (role === "FORNECEDOR") {
+    const fornecedor = await prisma.fornecedor.findFirst({ where: { usuarioId } });
+    if (!fornecedor) return { id: -1 };
+    const produtos = await prisma.produto.findMany({
+      where: { fornecedorId: fornecedor.id },
+      select: { id: true },
+    });
+    const ids = produtos.map((p) => p.id);
+    return ids.length > 0
+      ? { excluido: false, itens: { some: { produtoId: { in: ids } } } }
+      : { id: -1 };
+  }
+
+  if (role === "EMPREENDEDOR") {
+    const empreendedor = await prisma.empreendedor.findFirst({ where: { usuarioId } });
+    if (!empreendedor) return { id: -1 };
+    const produtos = await prisma.produto.findMany({
+      where: { empreendedorId: empreendedor.id },
+      select: { id: true },
+    });
+    const ids = produtos.map((p) => p.id);
+    return ids.length > 0
+      ? { excluido: false, itens: { some: { produtoId: { in: ids } } } }
+      : { id: -1 };
+  }
+
+  // CLIENTE — vê os próprios pedidos
   return { clienteId: usuarioId, excluido: false };
 }
 
@@ -19,7 +48,7 @@ async function listar(req, res, next) {
     const pedidos = await prisma.pedido.findMany({
       where,
       include: {
-        itens:   { include: { produto: { select: { nome: true, imagem: true, preco: true } } } },
+        itens: { include: { produto: { select: { nome: true, imagem: true, preco: true, tipo: true } } } },
         cliente: { select: { nome: true, email: true } },
         loja:    { select: { nome: true } },
       },
@@ -113,6 +142,13 @@ async function criar(req, res, next) {
 
     const total = Math.max(0, subtotalItens - valorUsoCashback);
 
+    // Tenta detectar a loja do pedido a partir dos produtos (se não vier no body)
+    let lojaIdFinal = lojaId || null;
+    if (!lojaIdFinal && itensMontados.length > 0) {
+      const primeiroProduto = produtos[0];
+      if (primeiroProduto?.lojaId) lojaIdFinal = primeiroProduto.lojaId;
+    }
+
     // Define forma de pagamento considerando uso de cashback
     let formaFinal;
     if (valorUsoCashback > 0 && total === 0) {
@@ -131,7 +167,7 @@ async function criar(req, res, next) {
 
     const pedido = await prisma.pedido.create({
       data: {
-        clienteId, lojaId, observacao, total,
+        clienteId, lojaId: lojaIdFinal, observacao, total,
         usoCashback:     valorUsoCashback,
         formaPagamento:  formaFinal,
         enderecoEntrega: enderecoEntrega || null,

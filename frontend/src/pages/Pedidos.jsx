@@ -97,7 +97,7 @@ export default function Pedidos() {
   const [modalDevolucao, setModalDevolucao] = useState(null); // pedido sendo devolvido
   const [motivoDevolucao, setMotivoDevolucao] = useState("");
 
-  const isVendedor = ["ADMINISTRADOR","LOJISTA","FORNECEDOR"].includes(usuario?.role);
+  const isVendedor = ["ADMINISTRADOR","LOJISTA","FORNECEDOR","EMPREENDEDOR"].includes(usuario?.role);
 
   async function carregar() {
     pedidoService.listar().then((r) => setPedidos(r.data)).catch(() => {});
@@ -205,7 +205,8 @@ export default function Pedidos() {
                   🔍 Ver Detalhes
                 </button>
 
-                {usuario?.role === "CLIENTE" && !verExcluidos && p.status === "ENTREGUE" && (
+                {usuario?.role === "CLIENTE" && !verExcluidos && p.status === "ENTREGUE" &&
+                  !p.itens?.every((item) => item.produto?.tipo === "SERVICO") && (
                   <button
                     onClick={() => { setModalDevolucao(p); setMotivoDevolucao(""); }}
                     style={{background:"#fee2e2", color:"#dc2626", border:"1px solid #dc2626", borderRadius:6, cursor:"pointer", padding:"6px 14px", fontSize:"0.82rem", fontWeight:600}}>
