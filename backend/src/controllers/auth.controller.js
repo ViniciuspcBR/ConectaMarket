@@ -33,12 +33,12 @@ async function login(req, res, next) {
 
     const usuario = await prisma.usuario.findUnique({ where: { email } });
     if (!usuario || !usuario.ativo) {
-      return res.status(401).json({ erro: "Credenciais inválidas." });
+      return res.status(401).json({ erro: "Email ou senha inválida." });
     }
 
     const senhaCorreta = await bcrypt.compare(senha, usuario.senha);
     if (!senhaCorreta) {
-      return res.status(401).json({ erro: "Credenciais inválidas." });
+      return res.status(401).json({ erro: "Email ou senha inválida." });
     }
 
     const token = jwt.sign(

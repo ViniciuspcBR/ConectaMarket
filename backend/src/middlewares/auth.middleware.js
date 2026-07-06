@@ -12,11 +12,22 @@ function authMiddleware(req, res, next) {
 
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
-    req.usuario = payload; // { id, email, role }
+    req.usuario = payload;
     next();
   } catch (err) {
     return res.status(401).json({ erro: "Token inválido ou expirado." });
   }
+}
+
+// Middleware opcional — tenta autenticar mas não bloqueia se não tiver token
+function authOpcional(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    try {
+      req.usuario = jwt.verify(authHeader.split(" ")[1], process.env.JWT_SECRET);
+    } catch (_) {}
+  }
+  next();
 }
 
 // Verifica se o usuário tem o perfil necessário
@@ -29,4 +40,4 @@ function autorizar(...roles) {
   };
 }
 
-module.exports = { authMiddleware, autorizar };
+module.exports = { authMiddleware, autorizar, authOpcional };

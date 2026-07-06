@@ -48,7 +48,7 @@ async function listar(req, res, next) {
     const pedidos = await prisma.pedido.findMany({
       where,
       include: {
-        itens: { include: { produto: { select: { nome: true, imagem: true, preco: true, tipo: true } } } },
+        itens:   { include: { produto: { select: { nome: true, imagem: true, preco: true, tipo: true } } } },
         cliente: { select: { nome: true, email: true } },
         loja:    { select: { nome: true } },
       },

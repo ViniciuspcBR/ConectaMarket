@@ -1,11 +1,11 @@
 // src/routes/produto.routes.js
 const router = require("express").Router();
 const { listar, buscarPorId, criar, criarLote, atualizar, remover } = require("../controllers/produto.controller");
-const { authMiddleware, autorizar } = require("../middlewares/auth.middleware");
+const { authMiddleware, autorizar, authOpcional } = require("../middlewares/auth.middleware");
 
 const VENDEDOR = ["LOJISTA","FORNECEDOR","EMPREENDEDOR","ADMINISTRADOR"];
 
-router.get("/",       listar);
+router.get("/",       authOpcional, listar);
 router.get("/:id",    buscarPorId);
 router.post("/lote",  authMiddleware, autorizar(...VENDEDOR), criarLote);
 router.post("/",      authMiddleware, autorizar(...VENDEDOR), criar);
